@@ -22,8 +22,23 @@
  * SOFTWARE.
  ******************************************************************************/
 
+/**
+ * Calls to the HexChat API through the hexchat.asynchronous interface return
+ * AsyncResult objects. The object has two fields: 'result' and 'error'.
+ * When an asynchronous API call is invoked, it returns immediately with
+ * an AsynchResult which can either be ignored or used to retrieve the return
+ * value of the call or the error information. Reading either field of the
+ * AsyncResult will block until the call has completed on the HexChat main
+ * thread and the data is available. The 'error' field will have an instance
+ * of the exception that was raised - if one was. It's __traceback__ property
+ * will be set.
+ */
+
 #include "minpython.h"
 
+/**
+ * AsynchResult object data.
+ */
 typedef struct {
     PyObject_HEAD
     PyObject *queue;
@@ -43,14 +58,10 @@ static PyObject *AsyncResult_get_error     (AsyncResultObj *, void *);
        void     asyncresult_set_result     (PyObject *, PyObject *);
        
        int      asyncresult_queue_get      (AsyncResultObj *);
-/*
-static PyMemberDef AsyncResult_members[] = {
-    { "server_time_utc", T_LONGLONG, offsetof(AsyncResultObj, server_time_utc), 0,
-    "." },
-    { NULL }
-};
-*/
 
+/**
+ * Accessors for 'result' and 'error'.
+ */
 static PyGetSetDef AsyncResult_accessors[] = {
     {"result",      (getter)AsyncResult_get_result,    (setter)NULL,
      "This property will block until the value is available. "
@@ -68,6 +79,9 @@ static PyGetSetDef AsyncResult_accessors[] = {
     { NULL }
 };
 
+/**
+ * AsyncResult type instance.
+ */
 static PyTypeObject AsyncResultType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name        = "hexchat.AsyncResult",
@@ -83,8 +97,18 @@ static PyTypeObject AsyncResultType = {
     .tp_getset      = AsyncResult_accessors,
 };
 
+/**
+ * Convenient type pointer.
+ */
 PyTypeObject *AsyncResultTypePtr = &AsyncResultType;
 
+/**
+ * Constructor.  Initializes 'error' and 'result' to None.
+ * @param self      - Instance ponter.
+ * @param args      - 'queue' is a queu.Queue instance passed in from Python.
+ *                    This is used to send the result back from the main thread.
+ * @returns - 0 on success, -1 if there was an error invoking the constructor.
+ */
 static int
 AsyncResult_init(AsyncResultObj *self, PyObject *args, PyObject *kwargs)
 {
@@ -106,6 +130,9 @@ AsyncResult_init(AsyncResultObj *self, PyObject *args, PyObject *kwargs)
     return 0;
 }
 
+/**
+ * Destructor.
+ */
 static void
 AsyncResult_dealloc(AsyncResultObj *self)
 {
@@ -115,6 +142,13 @@ AsyncResult_dealloc(AsyncResultObj *self)
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
+/**
+ * Accessor function for the 'result' field - registered in the type
+ * declaration.
+ * @param self      - Instance pointer.
+ * @param closure   - Not used.
+ * @returns - The result from the async call, or None.
+ */
 PyObject *
 AsyncResult_get_result(AsyncResultObj *self, void *closure) 
 {
@@ -125,6 +159,12 @@ AsyncResult_get_result(AsyncResultObj *self, void *closure)
     return self->result;
 }
 
+/**
+ * Accessor for 'error' field.
+ * @param self      - Instance.
+ * @param closure   - Not used.
+ * @returns - The exception that was raised - if one was, or None.
+ */
 PyObject *
 AsyncResult_get_error(AsyncResultObj *self, void *closure)
 {
@@ -135,6 +175,13 @@ AsyncResult_get_error(AsyncResultObj *self, void *closure)
     return self->error;
 }
 
+/**
+ * Retrieves the result of an asynchronous call from the instance's Queue.
+ * Sets the 'result' or 'error' field. If the call was successful, and the
+ * result is a Context object, it will be wrapped in an async DelegateProxy.
+ * @param self  - An AsyncResult instance.
+ * @returns - 0 on success, or -1 on failure with error state set.
+ */
 int 
 asyncresult_queue_get(AsyncResultObj *self)
 {
@@ -193,7 +240,8 @@ asyncresult_queue_get(AsyncResultObj *self)
 }
 
 /** 
- * Steals ref.
+ * This can be invoked from code that sets the result of an AsyncResult.
+ * **Steals ref for 'result'**
  */
 void
 asyncresult_set_result(PyObject *asyncresult, PyObject *result)
@@ -216,7 +264,7 @@ asyncresult_set_result(PyObject *asyncresult, PyObject *result)
 }
 
 /** 
- * Steals ref.
+ * Sets the 'error' field of an AsyncResult.  **Steals ref. for 'err'**
  */
 void
 asyncresult_set_error(PyObject *asyncresult, PyObject *err)

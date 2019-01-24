@@ -22,6 +22,14 @@
  * SOFTWARE.
  ******************************************************************************/
 
+/**
+ * The Console is a subinterpreter that exists for the duration of the
+ * Python plugin, from load to unload or HexChat exit. Invoking the text
+ * command /MPY EXEC passes text to it for execution from any window. There is
+ * an interactive Console window that can be brought up via /MPY CONSOLE.
+ * The same subinterpreter exists across all windows, including the Console.
+ */
+
 #include "minpython.h"
 
 /**
@@ -37,6 +45,9 @@ typedef struct {
     PyObject        *locals;
 } ConsoleData;
 
+/**
+ * The Console instance.
+ */
 static ConsoleData console_interp_data = { NULL, NULL, NULL, NULL, 
                                            NULL, NULL, NULL };
 
@@ -50,7 +61,11 @@ int        create_console           (void);
 int        close_console            (void);
 
 /**
- * Callback passed to create_interp().
+ * Callback passed to create_interp(). Sets the module name and sets up stdout
+ * for Python code colorization.
+ * @param ts        - The Console interp's main threadstate.
+ * @param userdata  - Userdata given to create_interp().
+ * @returns 0 (success)
  */
 static int
 create_callback(PyThreadState *ts, void *userdata)
@@ -84,6 +99,7 @@ create_callback(PyThreadState *ts, void *userdata)
 
 /**
  * Creates the console interpreter. Called when the Python plugin is loaded.
+ * @returns 0 (success).
  */
 int
 create_console_interp()
@@ -98,6 +114,7 @@ create_console_interp()
 
 /**
  * Callback passed to delete_interp().
+ * @returns 0 (success).
  */
 static int 
 delete_callback(PyThreadState *ts, void *userdata)
@@ -130,6 +147,8 @@ delete_console_interp()
 /**
  * Executes the provided script string. This is called in the console and with
  * the /MPY EXEC command.
+ * @param script    - The code to execute in the Console interp.
+ * @returns         - 0 on success, -1 on fail.
  */
 int
 exec_console_command(const char *script)
@@ -171,6 +190,8 @@ exec_console_command(const char *script)
 
 /**
  * Opens the console widow.
+ * @returns - HEXCHAT_EAT_ALL on success, HEXCHAT_EAT_NONE on failure to create
+ *            the interp.
  */
 int 
 create_console()
@@ -217,7 +238,8 @@ create_console()
 }
 
 /**
- * Closes the console if it's open.
+ * Closes the console if it's open. The interp is not destroyed.
+ * @returns HEXCHAT_EAT_ALL.
  */
 int
 close_console()
@@ -236,8 +258,12 @@ close_console()
 }
 
 /**
- * Executes lines of text entered in the console window in the subinterpreter 
- * and prints the result.
+ * Callback invoked when the user enters script text in the console. Passes
+ * text to the Console interpreter for execution.
+ * @param word      - Word data received from event.
+ * @param userdata  - The Console's ConsoleData instance.
+ * @returns     - HEXCHAT_EAT_ALL on success, HEXCHAT_EAT_NONE if the
+ *                an event is received from another context.
  */
 int 
 python_command_callback(char *word[], void *userdata)
@@ -260,6 +286,10 @@ python_command_callback(char *word[], void *userdata)
 
 /**
  * Suppresses server text messages in the console window.
+ * @param word      - Word data received from event.
+ * @param userdata  - The Console's ConsoleData instance.
+ * @returns     - HEXCHAT_EAT_ALL if event received for the Console context,
+ *                HEXCHAT_EAT_NONE if it was from another context.
  */
 int
 server_text_callback(char *word[], void *userdata) 
@@ -280,6 +310,10 @@ server_text_callback(char *word[], void *userdata)
 
 /**
  * Callback called when the console context is closed.
+ * @param word      - Word data from event.
+ * @param userdata  - The Console's ConsoleData instance.
+ * @returns HEXCHAT_EAT_ALL if the event came from the Console context,
+ *          HEXCHAT_EAT_NONE otherwise.
  */
 int
 close_context_callback(char *word[], void *userdata) 

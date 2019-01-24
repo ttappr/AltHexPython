@@ -1,3 +1,8 @@
+/**
+ * This is an auto-generated file. Edit colorizer.flex to make changes to the
+ * syntax highlighter, then run Flex to generate this file.
+ */
+
 #line 1 "colorizelexer.yy.c"
 
 #line 3 "colorizelexer.yy.c"

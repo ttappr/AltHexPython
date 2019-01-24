@@ -22,8 +22,20 @@
  * SOFTWARE.
  ******************************************************************************/
 
+/**
+ * Context objects represent the context pointer returned by
+ * hexchat_find_context(), or hexchat_get_context(). The objects implement
+ * __repr__() for intuitve display, __cmp__() for comparisons, __hash__() to
+ * support use of Context objects as dict keys.  The context also provides
+ * a small subset of the HexChat API that will execute within the associated
+ * context when invoked.
+ */
+
 #include "minpython.h"
 
+/**
+ * Context instance data.
+ */
 typedef struct {
     PyObject_HEAD
     PyObject *ctx_capsule;
@@ -51,16 +63,9 @@ static PyObject *Context_get_channel    (ContextObj *, void *);
 
 static inline int set_ctx               (ContextObj *, hexchat_context **);
 
-/*
-static PyMemberDef Context_members[] = {
-    {"_network",  T_OBJECT, offsetof(ContextObj,  _network), 0,
-     "."},
-    {"_channel", T_OBJECT, offsetof(ContextObj, _channel), 0,
-     ""}, 
-    {NULL}
-};
-*/
-
+/**
+ * Methods provided by Context objects.
+ */
 static PyMethodDef Context_methods[] = {
     {"set",        (PyCFunction)Context_set,      METH_NOARGS, 
      "Changes the current context to this one."},
@@ -90,6 +95,9 @@ static PyMethodDef Context_methods[] = {
     {NULL}
 };
 
+/**
+ * Properties for Context objects.
+ */
 static PyGetSetDef Context_accessors[] = {
     { "network",   (getter)Context_get_network,   (setter)NULL,
       "The network value for the context object.", NULL },
@@ -98,6 +106,9 @@ static PyGetSetDef Context_accessors[] = {
     { NULL }
 };
 
+/**
+ * Context type declaration/instance.
+ */
 static PyTypeObject ContextType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name        = "hexchat.Context",
@@ -116,18 +127,22 @@ static PyTypeObject ContextType = {
     .tp_richcompare = (richcmpfunc)Context_cmp,
 };
 
+/**
+ * Convenience pointer to Context type.
+ */
 PyTypeObject *ContextTypePtr = &ContextType;
 
 /**
  * Constructor for Context objects. If no parameters are provided, the context
  * will be the currently active context.
- *
+ * Python accessible params:
  * @param network   - specifies the server/network of the context. Optional - 
  *                    can be None.
  * @param channel   - specifies the channel of the context. Optional - can be
  *                    None.
  * @param context   - a capsule for a context pointer. Optional - other 
-  *                   parameters are ignored if provided. 
+ *                    parameters are ignored if provided.
+ * @returns 0 on success, -1 on failure.
  */
 static int
 Context_init(ContextObj *self, PyObject *args, PyObject *kwargs)
@@ -197,6 +212,9 @@ Context_init(ContextObj *self, PyObject *args, PyObject *kwargs)
     return retval;
 }
 
+/**
+ * Destructor.
+ */
 static void
 Context_dealloc(ContextObj *self)
 {
@@ -205,6 +223,13 @@ Context_dealloc(ContextObj *self)
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
+/**
+ * Sets HexChat to the context pointed to by self->ctxptr.
+ * @param self      - A Context instance.
+ * @param prior_ctx - A pointer to store the prior context in before switching
+ *                    to self->ctxptr.
+ * @returns - 0 on success, -1 on failure with error state set.
+ */
 int
 set_ctx(ContextObj *self, hexchat_context **prior_ctx)
 {
@@ -223,6 +248,10 @@ set_ctx(ContextObj *self, hexchat_context **prior_ctx)
     return retval;
 }
 
+/**
+ * Implements Context.set(). Sets the HexChat active context to self->ctxptr.
+ * @returns - None on success, NULL on failure with error state set.
+ */
 PyObject *
 Context_set(ContextObj *self, PyObject *Py_UNUSED(ignored))
 {
@@ -239,6 +268,12 @@ Context_set(ContextObj *self, PyObject *Py_UNUSED(ignored))
     Py_RETURN_NONE;
 }
 
+/**
+ * Implements Context.prnt().
+ * @param self  - Context instance.
+ * @param args  - 'text'. The text to print.
+ * @returns - None on success, NULL on failure with error state set.
+ */
 PyObject *
 Context_prnt(ContextObj *self, PyObject *args)
 {
@@ -263,6 +298,15 @@ Context_prnt(ContextObj *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+/**
+ * Implements Context.emit_print(). Forwards call to py_emit_print() declared
+ * in minpython.c.
+ * @param self   - Context instance.
+ * @param args   - Parameters passed in from Python and forwarded to
+ *                 py_emit_print().
+ * @param kwargs - Keyword params forwarded to py_emit_print().
+ * @returns - Python long object 0 value on failure, 1 on success.
+ */
 PyObject *
 Context_emit_print(ContextObj *self, PyObject *args, PyObject *kwargs)
 {
@@ -284,6 +328,12 @@ Context_emit_print(ContextObj *self, PyObject *args, PyObject *kwargs)
     return pyret;
 }
 
+/**
+ * Implements Context.command().
+ * @param self  - Context instance.
+ * @param args  - 'text'. The text of the command passed in from Python.
+ * @returns - None on success, NULL on fail with error state set.
+ */
 PyObject *
 Context_command(ContextObj *self, PyObject *args)
 {
@@ -308,6 +358,15 @@ Context_command(ContextObj *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+/**
+ * Implements Context.get_info(). Forwards call to py_get_info() declared in
+ * minpython.c. Executes the function within the self->ctxptr context.
+ * @param self  - Context instance.
+ * @param args  - 'id' passed in from Python. The ID, or name, of the
+ *                information requested.
+ * @returns - A Python string or long object on success, NULL on failure with
+ *            error state set.
+ */
 PyObject *
 Context_get_info(ContextObj *self, PyObject *args)
 {
@@ -333,6 +392,13 @@ Context_get_info(ContextObj *self, PyObject *args)
     return pyret;
 }
 
+/**
+ * Implements Context.get_list(). Sets the context and forwards call to
+ * py_get_list().
+ * @param self  - Context instance.
+ * @param args  - 'text'. The name of the list to retrieve.
+ * @returns - A Python list object, or NULL on failure with error state set.
+ */
 PyObject *
 Context_get_list(ContextObj *self, PyObject *args)
 {
@@ -358,6 +424,14 @@ Context_get_list(ContextObj *self, PyObject *args)
     return pyret;
 }
 
+/**
+ * Implements Context.get_listiter(). Sets context and forwards call to
+ * py_get_listiter().
+ * @param self  - Context instance.
+ * @param args  - 'text'. The name of the list to get an iterator for.
+ * @returns - A Python iterator object that can be used to iterate over the
+ *            internal hexchat list and access its fields. NULL on failure.
+ */
 PyObject *
 Context_get_listiter(ContextObj *self, PyObject *args)
 {
@@ -383,9 +457,16 @@ Context_get_listiter(ContextObj *self, PyObject *args)
     return pyret;
 }
 
-
+/**
+ * Implements the Context.__repr__() method to intuitive represent the object
+ * to the user.
+ * @param self  - instance.
+ * @param args  - ignored.
+ * @returns - A Python string object representing the Context instance. NULL
+ *            on failure with error state set.
+ */
 PyObject *
-Context_repr(ContextObj *self, PyObject *Py_UNUSED(ignored))
+Context_repr(ContextObj *self, PyObject *Py_UNUSED(args))
 {
     PyObject *pyrepr;
     const char *network, *channel;
@@ -412,6 +493,13 @@ Context_repr(ContextObj *self, PyObject *Py_UNUSED(ignored))
     return pyrepr;
 }
 
+/**
+ * Implements the Context.network property getter.
+ * @param self      - instance.
+ * @param closure   - not used.
+ * @returns - A Python string object with the name of the context's network,
+ *            NULL on failure with error state set.
+ */
 PyObject *
 Context_get_network(ContextObj *self, void *closure)
 {
@@ -426,6 +514,13 @@ Context_get_network(ContextObj *self, void *closure)
     
     return PyUnicode_FromString(network);
 }
+
+/**
+ * Implements Context.channel property getter.
+ * @param self      - Instance.
+ * @param closure   - Not used.
+ * @returns - A Python string object for the context's channel. NULL on fail.
+ */
 PyObject *
 Context_get_channel(ContextObj *self, void *closure)
 {
@@ -441,12 +536,18 @@ Context_get_channel(ContextObj *self, void *closure)
     return PyUnicode_FromString(channel);
 }
 
+/**
+ * Implements Context.__hash__(). Returns a hash for the object.
+ */
 Py_hash_t
 Context_hash(ContextObj *self)
 {
     return PyObject_Hash(self->ctxptrval);
 }
 
+/**
+ * Implements the rich comparison function for Context objects.
+ */
 PyObject *
 Context_cmp(ContextObj *a, PyObject *b, int op)
 {

@@ -401,7 +401,8 @@ add_mono_color(OutStreamObj *self, PyObject *pystr)
 }
 
 inline PyObject *
-get_color(PyObject *pymodule, char *syntax_item, char *default_color) {
+get_color(PyObject *pymodule, char *syntax_item, char *default_color)
+{
     PyObject *pypref;
 
     pypref = PyObject_CallMethod(pymodule, "get_pluginpref", "s", syntax_item);

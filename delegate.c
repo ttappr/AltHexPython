@@ -22,8 +22,19 @@
  * SOFTWARE.
  ******************************************************************************/
 
+/**
+ * The Delegate is a callable wrapper for other callables. Delegates execute
+ * their wrapped functions on the HexChat main thread and return the result
+ * back to the caller (synchronous), or an AsyncResult object (asynchronous)
+ * that can be used by the caller to retrieve the result or error - or it can
+ * be ignored.
+ */
+
 #include "minpython.h"
 
+/**
+ * Delegate Python object instance data.
+ */
 typedef struct {
     PyObject_HEAD
     PyObject *callable;
@@ -31,6 +42,10 @@ typedef struct {
     int      is_async;
 } DelegateObj;
 
+/**
+ * Data passed to timer callbacks used to invoke the internal callable on the
+ * main thread.
+ */
 typedef struct {
     PyObject      *callable;
     PyObject      *args;
@@ -46,24 +61,12 @@ static PyObject *Delegate_call          (DelegateObj *, PyObject *, PyObject *);
 static PyObject *Delegate_get_is_async  (DelegateObj *, void *);
 
 static PyObject *delegate_get_queue_constr  (DelegateObj *);
-static int      Delegate_timer_callback     (void *);
-/*
-static PyMemberDef Delegate_members[] = {
-    { "callable", T_LONGLONG, offsetof(DelegateObj, callable), 0,
-    "." },
-    {NULL}
-};
+static int      delegate_timer_callback     (void *);
 
-static PyMethodDef Delegate_methods[] = {
-    {"__call__"}
-    {NULL}
-};
-*/
-
+/**
+ * Delegate accessor functions to be registered with the type.
+ */
 static PyGetSetDef Delegate_accessors[] = {
-    /*{"_queue_module",   (getter)Delegate_get_queue_module,     (setter)NULL,
-     "The class variable holding the queue module. For internal use.", NULL},
-     */
     {"is_async",  (getter)Delegate_get_is_async,  (setter)NULL,
      "If True, the delegate returns an AsyncResult immediately. "
      "If False, the delegate blocks until the wrapped callable "
@@ -72,6 +75,9 @@ static PyGetSetDef Delegate_accessors[] = {
     {NULL}
 };
 
+/**
+ * Delegate type definition/instance.
+ */
 static PyTypeObject DelegateType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name        = "hexchat.Delegate",
@@ -92,8 +98,20 @@ static PyTypeObject DelegateType = {
     .tp_getset      = Delegate_accessors,
 };
 
+/**
+ * Convenient Delegate type pointer.
+ */
 PyTypeObject *DelegateTypePtr = &DelegateType;
 
+/**
+ * Delegate constructor.
+ * @param self  - Delegate instance.
+ * @param args  - 'callable', 'is_async' from Python. The first param is a
+ *                Python callable object to be wrapped, and the second is a
+ *                Python boolean value - True if the Delegate makes asynch
+ *                calls to the main thread, or False for synchronous calls.
+ * @returns - 0 on success, -1 on failure with error state set.
+ */
 int
 Delegate_init(DelegateObj *self, PyObject *args, PyObject *kwargs)
 {
@@ -124,6 +142,9 @@ Delegate_init(DelegateObj *self, PyObject *args, PyObject *kwargs)
     return 0;
 }
 
+/**
+ * Destructor.
+ */
 void
 Delegate_dealloc(DelegateObj *self)
 {
@@ -132,6 +153,22 @@ Delegate_dealloc(DelegateObj *self)
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
+/**
+ * Implements Delegate.__call__() which makes Delegate objects invokable as a
+ * function. When invoked, the wrapped callable is put in the HexChat timer
+ * queue for execution on the main thread. The result of this call will be
+ * sent back to this function via a Queue object and returned, or an
+ * AsyncResult will be immediately returned if the Delegate was created with
+ * 'is_async' True.
+ * @param self      - Delegate instance.
+ * @param args      - Similar to *args in Python. The positional arguments
+ *                    that will be forwarded to the wrapped callable.
+ * @param kwargs    - Similar to **kwargs from Python. The keyword arguments
+ *                    that are forwarded to the wrapped callable on invokation.
+ * @returns - Either an AsyncResult object for async delegates, or the result
+ *            of the wrapped call. NULL returned on failure with error state
+ *            set.
+ */
 PyObject *
 Delegate_call(DelegateObj *self, PyObject *args, PyObject *kwargs)
 {
@@ -205,7 +242,7 @@ Delegate_call(DelegateObj *self, PyObject *args, PyObject *kwargs)
         Py_XINCREF(kwargs);
 
         // Put the invokation information on the timer queue.
-        hexchat_hook_timer(ph, 0, Delegate_timer_callback, (void *)data);
+        hexchat_hook_timer(ph, 0, delegate_timer_callback, (void *)data);
 
         if (!self->is_async) {
             // Synchronous call. Do a blocking read on the queue and wait for
@@ -256,8 +293,14 @@ Delegate_call(DelegateObj *self, PyObject *args, PyObject *kwargs)
     return pyret;
 }
 
+/**
+ * The callback passed to hexchat_hook_timer() that invokes the Delegate's
+ * wrapped callable on the main thread of HexChat.
+ * @param userdata  - The userdata passed to hexchat_hook_timer().
+ * @returns - 0 so the timer won't be rescheduled.
+ */
 int 
-Delegate_timer_callback(void *userdata)
+delegate_timer_callback(void *userdata)
 {
     DelegateData    *data;
     PyObject        *pyret;
@@ -320,6 +363,11 @@ Delegate_timer_callback(void *userdata)
     return 0;
 }
 
+/**
+ * Used to retrieve queue.Queue so queue objects can be created to pass
+ * results from the timer callback to a Delegate object invoked from another
+ * thread.
+ */
 PyObject *
 delegate_get_queue_constr(DelegateObj *self)
 {
@@ -330,6 +378,10 @@ delegate_get_queue_constr(DelegateObj *self)
     return pyqconstr;
 }
 
+/**
+ * Delegate.is_async accessor function. Returns True if 'is_async' is set for
+ * the delegate, or False if not.
+ */
 PyObject *
 Delegate_get_is_async(DelegateObj *self, void *closure)
 {

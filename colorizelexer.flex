@@ -26,6 +26,9 @@
 /**
  * To generate the lexer, run flex on this file: flex colorizelexer.flex
  * This will produce the colorizelexer.yy.c file.
+ *
+ * This file defines a simple lexer grammaer for Python with action code that
+ * adds IRC color codes to tokens.
  */
 
 #pragma warning(disable:4005)
