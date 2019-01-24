@@ -400,6 +400,20 @@ add_mono_color(OutStreamObj *self, PyObject *pystr)
     return pycolstr;
 }
 
+inline PyObject *
+get_color(PyObject *pymodule, char *syntax_item, char *default_color) {
+	PyObject *pypref;
+
+	pypref = PyObject_CallMethod(pymodule, "get_pluginpref", "s", syntax_item);
+
+	if (pypref == Py_None) {
+		Py_DECREF(pypref);
+		pypref = PyObject_GetAttrString(pymodule, default_color);
+	}
+
+	return pypref;
+}
+
 /**
  * Initializes the colorization parameters - assigns colors to syntax items.
  */
@@ -407,32 +421,28 @@ int
 colorize_init(OutStreamObj *self)
 {
     PyObject *pybuiltins_module;
-    PyObject *pyhexchat_module;
+    PyObject *pyhcmodule;
 
-    pyhexchat_module  = PyImport_ImportModule("hexchat");
+    pyhcmodule  	  = PyImport_ImportModule("hexchat");
     pybuiltins_module = PyImport_ImportModule("builtins");
-    
-    // TODO - Add a feature where using set_pluginpref() can customize the
-    //        colors assigned to syntax items.
-    
-#define IRC_COLOR(color) PyObject_GetAttrString(pyhexchat_module, color)
-    
+
     ColorizerParams cp = {
-        .builtins_list  = PyObject_Dir(pybuiltins_module),
-        .string_color   = IRC_COLOR("IRC_MAGENTA"),
-        .number_color   = IRC_COLOR("IRC_CYAN"),
-        .keyword_color  = IRC_COLOR("IRC_NAVY"),
-        .operator_color = IRC_COLOR("IRC_OLIVE"),
-        .origattr_color = IRC_COLOR("IRC_ORIG_ATTRIBS"),
-        .comment_color  = IRC_COLOR("IRC_GREEN"),
-        .builtins_color = IRC_COLOR("IRC_TEAL")  
+		.builtins_list  = PyObject_Dir(pybuiltins_module),
+		.origattr_color = PyObject_GetAttrString(pyhcmodule,
+												 "IRC_ORIG_ATTRIBS"),
+
+		.string_color   = get_color(pyhcmodule, "string_color",  "IRC_MAGENTA"),
+		.number_color   = get_color(pyhcmodule, "number_color",  "IRC_CYAN"),
+		.keyword_color  = get_color(pyhcmodule, "keyword_color", "IRC_NAVY"),
+		.operator_color = get_color(pyhcmodule, "operator_color", "IRC_OLIVE"),
+		.comment_color  = get_color(pyhcmodule, "comment_color",  "IRC_GREEN"),
+		.builtins_color = get_color(pyhcmodule, "builtins_color", "IRC_TEAL"),
     };
+
     self->colorizer_params = cp;
 
-#undef IRC_COLOR
-
     Py_DECREF(pybuiltins_module);
-    Py_DECREF(pyhexchat_module);
+    Py_DECREF(pyhcmodule);
     
     return 0;
 }

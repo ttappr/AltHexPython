@@ -587,8 +587,8 @@ main_thread_check()
                 "The HexChat API should be called from the main thread when "
                 "invoked directly. A Delegate may be created, which "
                 "will execute API calls on the main thread when invoked from "
-                "other threads. Or hexchat_delegates can be imported which "
-                "provides ready-made delegates for the API.");
+                "other threads. The `synchronous` and `asynchronous` objects "
+                "of the module provide ready-made delegates for the API.");
 
         return -1;
     }

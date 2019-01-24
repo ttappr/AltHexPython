@@ -71,13 +71,13 @@ create_callback(PyThreadState *ts, void *userdata)
     data->globals     = pyglobals;
     data->locals      = pyglobals;
     
-    // Turn on code colorization.
-    pystdout = PySys_GetObject("stdout"); // Borrowed ref.
-    PyObject_SetAttrString(pystdout, "colorize_on", Py_True);
-    
     pymodname = PyUnicode_FromString("Console");
     PyDict_SetItemString(pyglobals, "__module_name__", pymodname);
     Py_DECREF(pymodname);
+
+    // Turn on code colorization.
+    pystdout = PySys_GetObject("stdout"); // Borrowed ref.
+    PyObject_SetAttrString(pystdout, "colorize_on", Py_True);
 
     return 0;
 }

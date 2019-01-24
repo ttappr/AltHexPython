@@ -24,12 +24,13 @@
 
 #include "minpython.h"
 
-#define MINPY_MODNAME           "MagPy Python"
-#define MINPY_MODDESC           "The alternative Python plugin."
-#define MINPY_MAJOR_VER         0
-#define MINPY_MINOR_VER         1
-#define MINPY_VER_STR           "0.1"
-#define MAX_WORD_ARRAY_LEN      32
+#define MINPY_MODNAME  "MagPy Python"
+#define MINPY_MODDESC  "The alternative Python 3 plugin support."
+#define MINPY_VER_STR  "0.1"
+
+#define MINPY_MAJOR_VER       0
+#define MINPY_MINOR_VER       1
+#define MAX_WORD_ARRAY_LEN    32
  
 /**
  * HexChat plugin handle.
@@ -413,8 +414,8 @@ void
 hexchat_plugin_get_info(char **name, char **desc, char **version,
     void **reserved)
 {
-    *name = MINPY_MODNAME;
-    *desc = MINPY_MODDESC;
+    *name 	 = MINPY_MODNAME;
+    *desc 	 = MINPY_MODDESC;
     *version = MINPY_VER_STR;
 }
 
@@ -429,7 +430,10 @@ int hexchat_plugin_init(hexchat_plugin *plugin_handle, char **plugin_name,
 
     wchar_t *argv[] = { L"<hexchat>", NULL };
 
-    hexchat_plugin_get_info(plugin_name, plugin_desc, plugin_version, NULL);
+    //hexchat_plugin_get_info(plugin_name, plugin_desc, plugin_version, NULL);
+    *plugin_name 	= MINPY_MODNAME;
+    *plugin_desc 	= MINPY_MODDESC;
+    *plugin_version = MINPY_VER_STR;
 
     hexchat_hook_command(ph, "MPY", HEXCHAT_PRI_NORM, mpy_callback,
                          "MinPython commands.", NULL);
@@ -476,6 +480,7 @@ hexchat_plugin_deinit(hexchat_plugin *plugin_handle)
     ret = Py_FinalizeEx();
 
     hexchat_printf(ph, "%s unloaded (%i).", MINPY_MODNAME, ret);
+
     return 1; /* return 1 for success */
 }
 
@@ -1738,12 +1743,12 @@ mpy_callback(char *word[], char *word_eol[], void *userdata)
     }
     else if (len_word >= 3 && pystrmatch(pycmd, "EXEC")) {
 
-        exec_console_command(word_eol[3]);
+    	exec_console_command(word_eol[3]);
         retval = HEXCHAT_EAT_ALL;
     }
     else if (len_word == 2 && pystrmatch(pycmd, "CONSOLE")) {
 
-        retval = create_console();
+    	retval = create_console();
     }
     else if (len_word == 2 && pystrmatch(pycmd, "ABOUT")) {
 
