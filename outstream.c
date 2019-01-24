@@ -402,16 +402,16 @@ add_mono_color(OutStreamObj *self, PyObject *pystr)
 
 inline PyObject *
 get_color(PyObject *pymodule, char *syntax_item, char *default_color) {
-	PyObject *pypref;
+    PyObject *pypref;
 
-	pypref = PyObject_CallMethod(pymodule, "get_pluginpref", "s", syntax_item);
+    pypref = PyObject_CallMethod(pymodule, "get_pluginpref", "s", syntax_item);
 
-	if (pypref == Py_None) {
-		Py_DECREF(pypref);
-		pypref = PyObject_GetAttrString(pymodule, default_color);
-	}
+    if (pypref == Py_None) {
+        Py_DECREF(pypref);
+        pypref = PyObject_GetAttrString(pymodule, default_color);
+    }
 
-	return pypref;
+    return pypref;
 }
 
 /**
@@ -423,20 +423,20 @@ colorize_init(OutStreamObj *self)
     PyObject *pybuiltins_module;
     PyObject *pyhcmodule;
 
-    pyhcmodule  	  = PyImport_ImportModule("hexchat");
+    pyhcmodule        = PyImport_ImportModule("hexchat");
     pybuiltins_module = PyImport_ImportModule("builtins");
 
     ColorizerParams cp = {
-		.builtins_list  = PyObject_Dir(pybuiltins_module),
-		.origattr_color = PyObject_GetAttrString(pyhcmodule,
-												 "IRC_ORIG_ATTRIBS"),
+        .builtins_list  = PyObject_Dir(pybuiltins_module),
+        .origattr_color = PyObject_GetAttrString(pyhcmodule,
+                                                 "IRC_ORIG_ATTRIBS"),
 
-		.string_color   = get_color(pyhcmodule, "string_color",  "IRC_MAGENTA"),
-		.number_color   = get_color(pyhcmodule, "number_color",  "IRC_CYAN"),
-		.keyword_color  = get_color(pyhcmodule, "keyword_color", "IRC_NAVY"),
-		.operator_color = get_color(pyhcmodule, "operator_color", "IRC_OLIVE"),
-		.comment_color  = get_color(pyhcmodule, "comment_color",  "IRC_GREEN"),
-		.builtins_color = get_color(pyhcmodule, "builtins_color", "IRC_TEAL"),
+        .string_color   = get_color(pyhcmodule, "string_color",  "IRC_MAGENTA"),
+        .number_color   = get_color(pyhcmodule, "number_color",  "IRC_CYAN"),
+        .keyword_color  = get_color(pyhcmodule, "keyword_color", "IRC_NAVY"),
+        .operator_color = get_color(pyhcmodule, "operator_color", "IRC_OLIVE"),
+        .comment_color  = get_color(pyhcmodule, "comment_color",  "IRC_GREEN"),
+        .builtins_color = get_color(pyhcmodule, "builtins_color", "IRC_TEAL"),
     };
 
     self->colorizer_params = cp;
