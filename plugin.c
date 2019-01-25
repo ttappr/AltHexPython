@@ -22,6 +22,11 @@
  * SOFTWARE.
  ******************************************************************************/
 
+/**
+ * This file holds functions and structures specifically relevant to the
+ * mangement of plugins written in Python.
+ */
+
 #include "minpython.h"
 
 #define MAX_IDCHR    512 
@@ -61,6 +66,8 @@ static void         plugin_list_clear       (void);
 
 /**
  * Initializes the plugins module. This is called when MinPython is loaded.
+ * Callbacks are registered for LOAD, UNLOAD, and RELOAD.
+ * @returns - 0.
  */
 int 
 init_plugins()
@@ -82,6 +89,7 @@ init_plugins()
 /**
  * De-initializes the plugins module. All loaded plugins are removed. This is
  * called when the MinPython plugin itself is unloaded.
+ * @returns - 0.
  */
 int
 delete_plugins()
@@ -92,6 +100,9 @@ delete_plugins()
 
 /**
  * Passed to create_interp() to do additional configuration of new interp.
+ * @param ts        - The threadstate of the plugin's interp.
+ * @param userdata  - The userdata passed to create_interp() with this function.
+ * @returns - 0 on success, -1 on failure with error state set.
  */
 static int 
 create_interp_callback(PyThreadState *ts, void *userdata) 
@@ -346,6 +357,11 @@ reload_plugin_callback(char *word[], char *word_eol[], void *userdata)
 
 /**
  * Adds a plugin list item to the linked list.
+ * @param name      - The name of the plugin.
+ * @param path      - The path to the plugin Python file.
+ * @param ts        - The threadstate of the plugin's interpreter.
+ * @param plugin_handle - The handle returned by hexchat_plugingui_add() when
+ *                        it was registered with hexchat.
  */
 void 
 plugin_list_add(PyObject *name, PyObject *path, 

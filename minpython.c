@@ -37,10 +37,6 @@
  */
 hexchat_plugin  *ph;
 
-/**
- * The main Python interpeter's thread state for the HexChat main thread.
- */
-//PyThreadState   *py_g_main_threadstate = NULL;
 
 /** 
  * CallbackData - Used as userdata for commands/events hooked on behalf of 

@@ -190,6 +190,9 @@ OutStream_dealloc(OutStreamObj *self)
  * "Buffers" the provided text for printing. If it's terminated with a newline, 
  * the buffer is flushed immediately and all pending text is written to the 
  * active context window.
+ * @param self      - instance.
+ * @param args      - 'text' from Python to write.
+ * @returns - None on success, NULL on fail with error state set.
  */
 PyObject *
 OutStream_write(OutStreamObj *self, PyObject *args)
@@ -286,6 +289,9 @@ OutStream_flush(OutStreamObj *self, PyObject *Py_UNUSED(args))
 /**
  * Colorizes the Python code string passed to it. This method is available
  * via OutStream objects.
+ * @param self      - instance.
+ * @param args      - 'str' from Python. The string of Python code to colorize.
+ * @returns - Either the colorized string object, or NULL with error state set.
  */
 PyObject *
 OutStream_colorize(OutStreamObj *self, PyObject *args)
@@ -322,6 +328,9 @@ OutStream_colorize(OutStreamObj *self, PyObject *args)
 
 /**
  * Returns True if code colorization is turned on; False otherwise.
+ * @param self      - Instance.
+ * @param closure   - Not used.
+ * @returns - True if colorization is on, False otherwise.
  */
 PyObject *
 OutStream_get_colorize_on(OutStreamObj *self, void *closure)
@@ -336,6 +345,9 @@ OutStream_get_colorize_on(OutStreamObj *self, void *closure)
 
 /**
  * Turns code colorization on or off for the OutStream object.
+ * @param self      - Instance.
+ * @param value     - From Python either True or False to set the property.
+ * @returns - 0 on success, -1 on fail with error state set.
  */
 int
 OutStream_set_colorize_on(OutStreamObj *self, PyObject *value, void *closure)
@@ -376,7 +388,10 @@ timer_write(void *userdata)
 }
 
 /**
- * Returns a string mono-colorized to the color code self->color.
+ * Returns a string mono-colorized to the color code self->color. This is used
+ * to display stderr output in red.
+ * @param self  - instance.
+ * @param pystr - The string to mono-colorize.
  */
 PyObject *
 add_mono_color(OutStreamObj *self, PyObject *pystr)
@@ -400,6 +415,17 @@ add_mono_color(OutStreamObj *self, PyObject *pystr)
     return pycolstr;
 }
 
+/**
+ * Used internally by colorize_init() to set the color for syntax items using
+ * either pluginprefs, or the default colors.
+ * @param pymodule      - The hexchat module.
+ * @param syntax_item   - The name of the syntax item: 'string_color',
+ *                        'number_color', 'keyword_color', 'operator_color',
+ *                        'comment_color', 'builtins_color'.
+ * @param default_color - The name of the default color to use: one of the
+ *                        hexchat module attributes that begin with 'IRC_'.
+ * @returns - The color code from either pluginprefs or the default.
+ */
 inline PyObject *
 get_color(PyObject *pymodule, char *syntax_item, char *default_color)
 {
@@ -417,6 +443,7 @@ get_color(PyObject *pymodule, char *syntax_item, char *default_color)
 
 /**
  * Initializes the colorization parameters - assigns colors to syntax items.
+ * @returns - 0.
  */
 int
 colorize_init(OutStreamObj *self)

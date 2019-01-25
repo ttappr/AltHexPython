@@ -24,7 +24,6 @@
 
 
 /**
- * TODO - rewrite this header comment. Make a header for each module.
  * This module provides access to per subinterpreter data stored within each 
  * subinterp's environment. It also has functions that execute within a
  * subinterp to configure it (setting up stdout/stderr, etc.). It also has
@@ -99,6 +98,9 @@ int             main_thread_check               (void);
  *                     It must return 0 on success, or non-zero on failure. If
  *                     non-zero, the created interp will be deleted before 
  *                     exiting.
+ * @param data       - Like 'userdata' for other calls. The caller can provide
+ *                     data it wants passed back to itself when invoking
+ *                     configfunc().
  * @returns - pointer to new threadstate, or NULL ond failure.
  */
 PyThreadState *
@@ -153,6 +155,12 @@ create_interp(interp_config_func configfunc, void *data)
 
 /**
  * Deletes the interpreter.
+ * @param ts         - The threadsate for the interpreter to delete.
+ * @param configfunc - A callback to invoke as part of the teardown of the
+ *                     interp.
+ * @param data       - 'userdata' to pass back to configfunc() when invoked.
+ * @returns - 0. Any erors that occur during teardown will be printed to the
+ *            current hexchat window.
  */
 int
 delete_interp(PyThreadState *ts, interp_config_func configfunc, void *data)
@@ -213,6 +221,7 @@ delete_interp(PyThreadState *ts, interp_config_func configfunc, void *data)
 
 /**
  * Sets up data objects for storing specific data for each subinterpreter.
+ * @param ts    - The threadstate of the interpreter.
  */
 void
 interp_init_data(PyThreadState *ts)
@@ -267,6 +276,9 @@ interp_init_data(PyThreadState *ts)
     PyTuple_SetItem(pytup, HC_LISTS_INFO, PyDict_New());
 }
 
+/**
+ * Returns the queue.Queue constructor - used by AsyncResult's.
+ */
 PyObject *
 interp_get_queue_constr()
 {
@@ -281,6 +293,10 @@ interp_get_queue_constr()
     return pyconstr; // BR.
 }
 
+/**
+ * Returns the constructor for collections.namedtuple, which is used by
+ * hexchat.get_list() to construct list items.
+ */
 PyObject *
 interp_get_namedtuple_constr()
 {
@@ -296,6 +312,9 @@ interp_get_namedtuple_constr()
 
 }
 
+/**
+ * Returns the tuple object that holds an interpreter's private data.
+ */
 PyObject *
 interp_get_lists_info(void)
 {
@@ -322,6 +341,8 @@ interp_destroy_data()
 
 /**
  * Returns a borrowed reference to the requested data object.
+ * @param key   - One of the key's #define'd above.
+ * @returns - The requested object.
  */
 PyObject *
 interp_get_data(Py_ssize_t key)
@@ -337,6 +358,9 @@ interp_get_data(Py_ssize_t key)
     return PyTuple_GetItem(pytup, key); // BR
 }
 
+/**
+ * Returns a string object for the name of the plugin (__module_name__).
+ */
 PyObject *
 interp_get_plugin_name()
 {
@@ -374,6 +398,7 @@ interp_get_main_threadstate()
 
 /**
  * Adds a hook capsule to the list of hooks for the current subinterpreter.
+ * @param hook - the hook to add.
  */
 void
 interp_add_hook(PyObject *hook)
@@ -388,6 +413,9 @@ interp_add_hook(PyObject *hook)
  * Adds a callback that will get invoked when the plugin is being unloaded.
  * These are a customization for Python - the C API doesn't have specific
  * hooks for the unloading event. Returns a capsule.
+ * @param callback  - The unload event callback being registered.
+ * @param userdata  - Data to pass back to the callback on the event.
+ * @returns - A PyCapsule object holding a pointer to the hook data.
  */
 PyObject *
 interp_hook_unload(PyObject *callback, PyObject *userdata)
@@ -415,6 +443,8 @@ interp_hook_unload(PyObject *callback, PyObject *userdata)
 /**
  * Unhooks callbacks for the custom unload event. Returns the userdata that was
  * registered with the hook callback.
+ * @param hook  - The hook for the callback to unhook.
+ * @returns - The userdata that was registered with the callback.
  */
 PyObject *
 interp_unhook_unload(PyObject *hook) {
@@ -595,6 +625,11 @@ main_thread_check()
     return 0;
 }
 
+/**
+ * A function used by the PyCapsule object that holds hook pointers to free
+ * the unload_hook data.
+ * @param pyhook - The hook for the callback data being freed.
+ */
 void
 py_hook_free_fn(PyObject *pyhook)
 {
