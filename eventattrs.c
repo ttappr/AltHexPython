@@ -22,8 +22,15 @@
  * SOFTWARE.
  ******************************************************************************/
 
+/**
+ * Only has a server_time_utc field that holds a numeric time_t value.
+ */
+
 #include "minpython.h"
 
+/**
+ * Instance data.
+ */
 typedef struct {
     PyObject_HEAD
     PyObject *server_time_utc;
@@ -36,35 +43,20 @@ static int      EventAttrs_set_time     (EventAttrsObj *, PyObject *, void *);
 
 static PyObject *EventAttrs_cmp        (EventAttrsObj *, PyObject *, int);
 static PyObject *EventAttrs_repr       (EventAttrsObj *, PyObject *);
-/*
-static PyMemberDef EventAttrs_members[] = {
-    {"server_time_utc", T_OBJECT_EX, offsetof(EventAttrsObj, server_time_utc), 
-    0, 
-    "Server time value - internally converted to time_t C type on API calls."}, 
-    {NULL}
-};
-*/
-/*
-static PyMethodDef EventAttrs_methods[] = {
-    {"write",   (PyCFunction)EventAttrs_write,      METH_VARARGS | METH_KEYWORDS,
-     "Appends text to an internal list - calls flush() if last character is "
-     "'\\n'."},
-    {NULL}
-};
-*/
 
+/**
+ * Accessors.
+ */
 static PyGetSetDef EventAttrs_accessors[] = {
   { "server_time_utc",   (getter)EventAttrs_get_time,     
                          (setter)EventAttrs_set_time,
     "Server time.", NULL },
-   /*
-    { "_capsule",          (getter)EventAttrs_get_capsule, 
-                           (setter)NULL,
-      "The attributes capsule - for internal use.", NULL },*/
-
     { NULL }
 };
 
+/**
+ * Type declaration/instance.
+ */
 static PyTypeObject EventAttrsType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name        = "hexchat.EventAttrs",
@@ -75,15 +67,25 @@ static PyTypeObject EventAttrsType = {
     .tp_new         = PyType_GenericNew,
     .tp_init        = (initproc)EventAttrs_init,
     .tp_dealloc     = (destructor)EventAttrs_dealloc,
-    //.tp_members     = EventAttrs_members,
-    //.tp_methods     = EventAttrs_methods,
     .tp_getset      = EventAttrs_accessors,
     .tp_richcompare = (richcmpfunc)EventAttrs_cmp,
     .tp_repr        = (reprfunc)EventAttrs_repr,
 };
 
+/**
+ * Conenient type pointer.
+ */
 PyTypeObject *EventAttrsTypePtr = &EventAttrsType;
 
+/**
+ * Constructor.
+ * @param self  - instance.
+ * @param args  - 'server_time_utc' from Python (optional). An integer value
+ *                representing time. Uses same format as time() from the C lib.
+ *                If time value is not given to the constructor, it will be
+ *                constructed with the current time vale.
+ * @returns - 0 on success, -1 on failure with error state set.
+ */
 int
 EventAttrs_init(EventAttrsObj *self, PyObject *args, PyObject *kwargs)
 {
@@ -122,6 +124,9 @@ EventAttrs_init(EventAttrsObj *self, PyObject *args, PyObject *kwargs)
     return 0;
 }
 
+/**
+ * Destructor.
+ */
 void
 EventAttrs_dealloc(EventAttrsObj *self)
 {
@@ -129,6 +134,9 @@ EventAttrs_dealloc(EventAttrsObj *self)
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
+/**
+ * Getter for the 'server_utc_time' field.
+ */
 PyObject *
 EventAttrs_get_time(EventAttrsObj *self, void *closure)
 {
@@ -136,6 +144,9 @@ EventAttrs_get_time(EventAttrsObj *self, void *closure)
     return self->server_time_utc;
 }
 
+/**
+ * Setter for the 'server_utc_time' field.
+ */
 int
 EventAttrs_set_time(EventAttrsObj *self, PyObject *value, void *closure)
 {
@@ -149,15 +160,10 @@ EventAttrs_set_time(EventAttrsObj *self, PyObject *value, void *closure)
     Py_INCREF(value);
     return 0;
 }
-/*
-PyObject *
-EventAttrs_get_capsule(EventAttrsObj *self, void *closure)
-{
-    Py_INCREF(self->attrs_capsule);
-    return self->attrs_capsule;
-}
-*/
 
+/**
+ * Comparison function.
+ */
 PyObject *EventAttrs_cmp(EventAttrsObj *a, PyObject *b, int op)
 {
     EventAttrsObj *bea = (EventAttrsObj *)b;
@@ -169,6 +175,9 @@ PyObject *EventAttrs_cmp(EventAttrsObj *a, PyObject *b, int op)
     Py_RETURN_FALSE;
 }
 
+/**
+ * Implements EventAttrs.__repr__().
+ */
 PyObject *
 EventAttrs_repr(EventAttrsObj *self, PyObject *Py_UNUSED(ignored))
 {

@@ -22,8 +22,20 @@
  * SOFTWARE.
  ******************************************************************************/
 
+/**
+ * A list iter closely models how hexchat list pointers work. An internal
+ * pointer to a HexChat list is held. next() can be called on a ListIter obj
+ * to advance the internal pointer. iter() called on a ListIter object returns
+ * the ListIter object itself. This makes it possible to iterate quickly over
+ * lists using loop syntax and accessing the fields the internal pointer is
+ * currently set to.
+ */
+
 #include "minpython.h"
 
+/**
+ * ListIter instance data.
+ */
 typedef struct {
     PyObject_HEAD
     PyObject        *xlist_name;
@@ -46,14 +58,9 @@ static PyObject *ListIter_get_field_names   (ListIterObj *, void *);
 static PyObject *get_lists_info             (ListIterObj *);
 static void     listiter_create_lists_info_dict(void);
 
-/*
-static PyMemberDef ListIter_members[] = {
-    {"list_name", T_OBJECT, offsetof(ListIterObj, xlist_name), 0,
-     "."},
-    {NULL}
-};
-*/
-
+/**
+ * ListIter methods.
+ */
 static PyMethodDef ListIter_methods[] = {
     {"__dir__",   (PyCFunction)ListIter_dir,      METH_NOARGS,
      "Returns attributes of ListIter, which include the field names of the "
@@ -62,6 +69,9 @@ static PyMethodDef ListIter_methods[] = {
     {NULL}
 };
 
+/**
+ * ListIter accessors.
+ */
 static PyGetSetDef ListIter_accessors[] = {
     {"list_name",   (getter)ListIter_get_list_name,     (setter)NULL,
      "The list name for the iterator.", NULL },
@@ -72,6 +82,9 @@ static PyGetSetDef ListIter_accessors[] = {
     {NULL}
 };
 
+/**
+ * ListIter type declaration/instance.
+ */
 static PyTypeObject ListIterType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name        = "hexchat.ListIter",
@@ -90,8 +103,18 @@ static PyTypeObject ListIterType = {
     .tp_getattro    = (getattrofunc)ListIter_getattro,    
 };
 
+/**
+ * ListIter convenience ptr.
+ */
 PyTypeObject *ListIterTypePtr = &ListIterType;
 
+/**
+ * Constructor.
+ * @param self      - instance.
+ * @param args      - From Python takes a string for the name of the list to
+ *                    grab an internal hexchat_list pointer to.
+ * @returns - 0 on success, -1 on failure with error state set.
+ */
 static int
 ListIter_init(ListIterObj *self, PyObject *args, PyObject *Py_UNUSED(kwargs))
 {
@@ -144,6 +167,9 @@ ListIter_init(ListIterObj *self, PyObject *args, PyObject *Py_UNUSED(kwargs))
     return 0;
 }
 
+/**
+ * Destructor.
+ */
 static void
 ListIter_dealloc(ListIterObj *self)
 {
@@ -156,6 +182,12 @@ ListIter_dealloc(ListIterObj *self)
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
+/**
+ * Implements ListIter.__next__(). This gets invoked when next() is invoked on
+ * a ListIter object.
+ * @returns - self with refcount incremented. Throws PyExc_StopIteration if
+ *            at the end of the list.
+ */
 PyObject *
 ListIter_next(ListIterObj *self)
 {
@@ -297,12 +329,20 @@ ListIter_getattro(ListIterObj *self, PyObject *pyname)
     return pyretval;
 }
 
+/**
+ * Accessor that returns the name of the hexchat_list.
+ */
 PyObject *ListIter_get_list_name(ListIterObj *self, void *args)
 {
     Py_INCREF(self->xlist_name);
     return self->xlist_name;
 }
 
+/**
+ * Getter for the names of the fields of the list. The fields of the list
+ * item currently pointed to by the internal pointer are accessible through
+ * the ListIter object.
+ */
 PyObject *ListIter_get_field_names(ListIterObj *self, void *args)
 {
     Py_INCREF(self->field_names);

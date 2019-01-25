@@ -366,7 +366,7 @@ delegate_timer_callback(void *userdata)
 /**
  * Used to retrieve queue.Queue so queue objects can be created to pass
  * results from the timer callback to a Delegate object invoked from another
- * thread.
+ * thread to the caller.
  */
 PyObject *
 delegate_get_queue_constr(DelegateObj *self)

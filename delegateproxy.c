@@ -22,9 +22,21 @@
  * SOFTWARE.
  ******************************************************************************/
 
+/**
+ * A DelegateProxy wraps objects and provides Delegates for their methods
+ * or functions. There are two ready-made DelegateProxy's provided by the
+ * hexchat module: 'hexchat.synchronous' and 'hexchat.asynchronous'. Each
+ * provides Delegates for the hexchat API. The synchronous DelegateProxy
+ * provides synchronous Delegates for the API, and the asynchronous
+ * DelegateProxy provides asynchronous Delegates. DelegateProxy's can be
+ * created to wrap any arbitrary object if desired.
+ */
+
 #include "minpython.h"
 
-
+/**
+ * Instance object data.
+ */
 typedef struct {
     PyObject_HEAD
     PyObject *obj;
@@ -43,10 +55,16 @@ static Py_hash_t DelegateProxy_hash      (DelegateProxyObj *);
 static PyObject *DelegateProxy_cmp       (DelegateProxyObj *, PyObject *, int);
 static PyObject *DelegateProxy_repr      (DelegateProxyObj *, PyObject *);
 
+/**
+ * DelegateProxy instance members.
+ */
 static PyMemberDef DelegateProxy_members[] = {
     { NULL }
 };
 
+/**
+ * DelegateProxy methods.
+ */
 static PyMethodDef DelegateProxy_methods[] = {
     {"__dir__",   (PyCFunction)DelegateProxy_dir,      METH_NOARGS,
      "Returns attributes of DelegateProxy, which include the attributes of the "
@@ -55,6 +73,9 @@ static PyMethodDef DelegateProxy_methods[] = {
     { NULL }
 };
 
+/**
+ * Instance getters and setters.
+ */
 static PyGetSetDef DelegateProxy_accessors[] = {
     { "is_async",    (getter)DelegateProxy_is_async, (setter)NULL,
       "If async is True, the methods of the proxy will return AsyncResult "
@@ -67,6 +88,9 @@ static PyGetSetDef DelegateProxy_accessors[] = {
     { NULL }
 };
 
+/**
+ * Type declaration and instance.
+ */
 static PyTypeObject DelegateProxyType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name        = "hexchat.DelegateProxy",
@@ -86,8 +110,22 @@ static PyTypeObject DelegateProxyType = {
     .tp_getattro    = (getattrofunc)DelegateProxy_getattro,  
 };
 
+/**
+ * Convenience pointer to the type.
+ */
 PyTypeObject *DelegateProxyTypePtr = &DelegateProxyType;
 
+/**
+ * Constructor.
+ * @param self      - Object instance.
+ * @param args      - From python there are two positional arguments:
+ *                    the wrapped object and 'is_async'. If 'is_async' is True
+ *                    the DelegateProxy will provide asynchronous delegates to
+ *                    the wrapped objects methods. If False, the delegates
+ *                    are synchronous.
+ * @param kwargs    - not used.
+ * @returns - 0 on success, or -1 on failure with error state set.
+ */
 int
 DelegateProxy_init(DelegateProxyObj *self, PyObject *args, PyObject *kwargs)
 {
@@ -119,6 +157,10 @@ DelegateProxy_dealloc(DelegateProxyObj *self)
  * is wrapped in a Delegate object which will execute it on the main thread 
  * when invoked. A cache of Delegates is maintained so subsequent accesses of
  * a callable attribute returns the same Delegate.
+ * @param self      - instance.
+ * @param pyname    - The name of the attribute being accessed.
+ * @returns - The attribute, or a Delegate for callable attributes. NULL on
+ *            failure with error state set.
  */
 PyObject *
 DelegateProxy_getattro(DelegateProxyObj *self, PyObject *pyname)
@@ -162,6 +204,9 @@ DelegateProxy_getattro(DelegateProxyObj *self, PyObject *pyname)
     return pyretval;
 }
 
+/**
+ * Accessor for 'is_async'.
+ */
 PyObject *
 DelegateProxy_is_async(DelegateProxyObj *self, void *closure)
 {
@@ -173,6 +218,9 @@ DelegateProxy_is_async(DelegateProxyObj *self, void *closure)
     }
 }
 
+/**
+ * 'obj' getter for the wrapped object.
+ */
 PyObject *
 DelegateProxy_wrapped(DelegateProxyObj *self, void *closure)
 {
@@ -211,6 +259,9 @@ DelegateProxy_dir(DelegateProxyObj *self)
     return pyset;
 }
 
+/**
+ * Returns an intuitive representation of the DelegateProxy instance.
+ */
 PyObject *
 DelegateProxy_repr(DelegateProxyObj *self, PyObject *Py_UNUSED(args))
 {
@@ -230,6 +281,10 @@ DelegateProxy_repr(DelegateProxyObj *self, PyObject *Py_UNUSED(args))
     return pyrepr;
 }
 
+/**
+ * Implements the comparison function. DelegateProxy instances are equal to
+ * other DelegateProxy instances that wrap objects that are equal.
+ */
 PyObject *
 DelegateProxy_cmp(DelegateProxyObj *a, PyObject *b, int op)
 {
@@ -242,6 +297,10 @@ DelegateProxy_cmp(DelegateProxyObj *a, PyObject *b, int op)
     Py_RETURN_FALSE;
 }
 
+/**
+ * Returns a hash for the instance based on the wrapped object's hash, but not
+ * the same value.
+ */
 Py_hash_t
 DelegateProxy_hash(DelegateProxyObj *self)
 {

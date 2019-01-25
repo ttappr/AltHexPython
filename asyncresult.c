@@ -30,7 +30,7 @@
  * value of the call or the error information. Reading either field of the
  * AsyncResult will block until the call has completed on the HexChat main
  * thread and the data is available. The 'error' field will have an instance
- * of the exception that was raised - if one was. It's __traceback__ property
+ * of the exception that was raised - if one was. Its __traceback__ property
  * will be set.
  */
 
@@ -85,7 +85,7 @@ static PyGetSetDef AsyncResult_accessors[] = {
 static PyTypeObject AsyncResultType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name        = "hexchat.AsyncResult",
-    .tp_doc         = "Server event attributes.",
+    .tp_doc         = "The type returned by asynchronous Delegate calls.",
     .tp_basicsize   = sizeof(AsyncResultObj),
     .tp_itemsize    = 0,
     .tp_flags       = Py_TPFLAGS_DEFAULT,
