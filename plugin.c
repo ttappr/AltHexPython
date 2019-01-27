@@ -131,8 +131,6 @@ create_interp_callback(PyThreadState *ts, void *userdata)
         // Good so far - retrieve needed information from the sub-interpter.
         pymain_module = PyImport_AddModule("__main__"); // BR
         pymain_dict = PyModule_GetDict(pymain_module);  // BR
-
-        // TODO - Handle case where the expected variables aren't set.
         
         if (pymain_dict) {
             pymodname = PyDict_GetItemString(pymain_dict, 

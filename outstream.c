@@ -22,6 +22,17 @@
  * SOFTWARE.
  ******************************************************************************/
  
+/**
+ * OutStream objects handle standard output and are assigned to the sys.stdout
+ * and sys.stderr of each subinterpreter and the Console interp. OutStream
+ * objects provide a write() and flush() method and buffer output similar to
+ * the default standard output objects of other Python shell environments. A
+ * colorize() method is also provided to add IRC color codes to Python script
+ * text for the Console, or any other code that may want to utilize the
+ * feature. The Console's sys.stdout colorizes automatically by default on
+ * stdout. This can be turned off via sys.stdout.colorize_on = False.
+ */
+
 #include "minpython.h"
 
 /**

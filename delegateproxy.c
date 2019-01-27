@@ -94,7 +94,7 @@ static PyGetSetDef DelegateProxy_accessors[] = {
 static PyTypeObject DelegateProxyType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name        = "hexchat.DelegateProxy",
-    .tp_doc         = "Server event attributes.",
+    .tp_doc         = "Wraps an object and provides Delegates for its methods.",
     .tp_basicsize   = sizeof(DelegateProxyObj),
     .tp_itemsize    = 0,
     .tp_flags       = Py_TPFLAGS_DEFAULT,

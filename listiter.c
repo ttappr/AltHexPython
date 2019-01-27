@@ -141,7 +141,7 @@ ListIter_init(ListIterObj *self, PyObject *args, PyObject *Py_UNUSED(kwargs))
         return -1;
     }
 
-    // Get the field names and types from the _lists_info class variable.
+    // Get the field names and types.
     if (!(pylists_info = get_lists_info(self))) {
         return -1;
     }
@@ -380,11 +380,6 @@ PyObject *ListIter_dir(ListIterObj *self)
 *
 *     { "<list-name>" : (  (<field-name>, ... ),
 *                          { "<field-name>" : <type>, ... }  ), ... }
-*
-* Example lookups demonstrating data structure:
-*
-*    network_field_type   = ListIter._lists_info["channels"][1]["network"]
-*    channels_field_names = ListIter._lists_info["channels"][0]
 */
 void
 listiter_create_lists_info_dict()

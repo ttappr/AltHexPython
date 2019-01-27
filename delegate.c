@@ -124,7 +124,7 @@ Delegate_init(DelegateObj *self, PyObject *args, PyObject *kwargs)
         return -1;
     }
     if (PyCallable_Check(pycallable) == 0) {
-        PyErr_SetString(PyExc_RuntimeError, 
+        PyErr_SetString(PyExc_TypeError,
                         "Delegate constructor requires a callable object." );
         return -1;
     }

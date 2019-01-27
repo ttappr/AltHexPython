@@ -382,8 +382,8 @@ PyInit_hexchat(void)
     for (int i = 0; types_to_register[i] != NULL; i += 2) {
         if (PyType_Ready((PyTypeObject *)types_to_register[i + 1]) < 0) {
             hexchat_printf(ph,
-                "\0034Error encountered registering hexchat.%s.",
-                (char *)types_to_register[i]);
+                           "\0034Error encountered registering hexchat.%s.",
+                           (char *)types_to_register[i]);
             return NULL;
         }
         PyModule_AddObject(pymodule,
@@ -408,10 +408,10 @@ PyInit_hexchat(void)
 */
 void
 hexchat_plugin_get_info(char **name, char **desc, char **version,
-    void **reserved)
+                        void **reserved)
 {
-    *name      = MINPY_MODNAME;
-    *desc      = MINPY_MODDESC;
+    *name    = MINPY_MODNAME;
+    *desc    = MINPY_MODDESC;
     *version = MINPY_VER_STR;
 }
 
@@ -420,15 +420,14 @@ hexchat_plugin_get_info(char **name, char **desc, char **version,
 * plugin.
 */
 int hexchat_plugin_init(hexchat_plugin *plugin_handle, char **plugin_name,
-    char **plugin_desc, char **plugin_version, char *arg)
+                        char **plugin_desc, char **plugin_version, char *arg)
 {
     ph = plugin_handle;
 
     wchar_t *argv[] = { L"<hexchat>", NULL };
 
-    //hexchat_plugin_get_info(plugin_name, plugin_desc, plugin_version, NULL);
-    *plugin_name     = MINPY_MODNAME;
-    *plugin_desc     = MINPY_MODDESC;
+    *plugin_name    = MINPY_MODNAME;
+    *plugin_desc    = MINPY_MODDESC;
     *plugin_version = MINPY_VER_STR;
 
     hexchat_hook_command(ph, "MPY", HEXCHAT_PRI_NORM, mpy_callback,
@@ -664,7 +663,7 @@ py_nickcmp(PyObject *self, PyObject *args)
 }
 
 /**
- * Implemets the hexchat.strip() function.
+ * Implements the hexchat.strip() function.
  */
 PyObject *
 py_strip(PyObject *self, PyObject *args, PyObject *kwargs)
@@ -1184,10 +1183,6 @@ py_hook_unload(PyObject *self, PyObject *args)
     
     return pyret;
 }
-
-// TODO - Make tests that verify corner cases on parameters. For instance,
-//        make sure methods will take None if expected to for certain
-//        parameters.
 
 /**
  * Python implementation for hexchat.find_context().
