@@ -38,8 +38,8 @@ typedef struct {
 
 static int      EventAttrs_init        (EventAttrsObj *, PyObject *, PyObject *);
 static void     EventAttrs_dealloc     (EventAttrsObj *);
-static PyObject *EventAttrs_get_time    (EventAttrsObj *, void *);
-static int      EventAttrs_set_time     (EventAttrsObj *, PyObject *, void *);
+static PyObject *EventAttrs_get_time   (EventAttrsObj *, void *);
+static int      EventAttrs_set_time    (EventAttrsObj *, PyObject *, void *);
 
 static PyObject *EventAttrs_cmp        (EventAttrsObj *, PyObject *, int);
 static PyObject *EventAttrs_repr       (EventAttrsObj *, PyObject *);

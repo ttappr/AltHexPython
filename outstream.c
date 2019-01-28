@@ -31,6 +31,13 @@
  * text for the Console, or any other code that may want to utilize the
  * feature. The Console's sys.stdout colorizes automatically by default on
  * stdout. This can be turned off via sys.stdout.colorize_on = False.
+ *
+ * The colorizer colors can be configured using set_pluginpref().  Set
+ * 'string_color', 'number_color', 'operator_color', 'builtins_color',
+ * 'keyword_color' to any of the color codes that start with 'hexchat.IRC_...'.
+ * e.g. hexchat.set_pluginpref('string_color', hexchat.IRC_RED). The settings
+ * will become effective after restarting HexChat, or you can do this:
+ * sys.stdout = hexchat.OutStream(); sys.stdout.colorize_on = True.
  */
 
 #include "minpython.h"
