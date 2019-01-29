@@ -241,7 +241,6 @@ exec_console_command(const char *script)
                     data->contmode = 1;
                 }
 
-                Py_DECREF(pyerrmsg);
                 Py_DECREF(pyerrtype);
                 Py_DECREF(pyerrval);
                 Py_XDECREF(pytraceback);
@@ -255,6 +254,7 @@ exec_console_command(const char *script)
                 data->scriptbuf = PyList_New(0);
                 retval = -1;
             }
+            Py_XDECREF(pyerrmsg);
         }
         else {
             PyErr_Print();
