@@ -248,19 +248,11 @@ exec_console_command(const char *script)
             }
             else {
                 PyErr_Restore(pyerrtype, pyerrval, pytraceback);
-                PyErr_Print();
-                Py_DECREF(data->scriptbuf);
-                data->contmode = 0;
-                data->scriptbuf = PyList_New(0);
                 retval = -1;
             }
             Py_XDECREF(pyerrmsg);
         }
         else {
-            PyErr_Print();
-            Py_DECREF(data->scriptbuf);
-            data->contmode = 0;
-            data->scriptbuf = PyList_New(0);
             retval = -1;
         }
     }
@@ -279,13 +271,18 @@ exec_console_command(const char *script)
                                 data->globals,
                                 data->locals);
         if (!pyresult) {
-            PyErr_Print();
             retval = -1;
         }
         else {
             Py_DECREF(pyresult);
             retval = 0;
         }
+    }
+    if (retval != 0) {
+        PyErr_Print();
+        Py_DECREF(data->scriptbuf);
+        data->scriptbuf = PyList_New(0);
+        data->contmode = 0;
     }
 
     Py_DECREF(pyscript);
