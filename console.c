@@ -271,7 +271,7 @@ exec_console_command(const char *script)
         data->scriptbuf = PyList_New(0);
 
         pyresult = PyRun_String(PyUnicode_AsUTF8(pyscript),
-                                Py_file_input, //Py_single_input,
+                                Py_single_input,
                                 data->globals,
                                 data->locals);
         if (!pyresult) {
