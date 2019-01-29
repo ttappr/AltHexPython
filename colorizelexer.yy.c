@@ -1,8 +1,3 @@
-/**
- * This is an auto-generated file. Edit colorizer.flex to make changes to the
- * syntax highlighter, then run Flex to generate this file.
- */
-
 #line 1 "colorizelexer.yy.c"
 
 #line 3 "colorizelexer.yy.c"
@@ -371,8 +366,8 @@ static const flex_int16_t yy_accept[285] =
         0,    0,    0,   30,   31,   30,   34,   34,   37,    0,
        38,   37,   41,    0,   38,    4,    0,    0,    0,    0,
         4,    0,    0,    0,   29,   33,    2,    0,    2,    0,
-        2,    0,    2,    0,    0,    2,    2,    0,    2,    0,
-        2,    1,    0,    0,    0,   24,   24,   24,   24,   24,
+        1,    2,    0,    2,    0,    0,    2,    2,    0,    2,
+        0,    2,    0,    0,    0,   24,   24,   24,   24,   24,
 
        24,   24,   24,   24,   24,   15,   24,   24,   24,   24,
         8,   24,   24,   24,   24,   24,   24,   24,   24,   10,
@@ -450,8 +445,8 @@ static const flex_int16_t yy_base[297] =
       372,  375,  451,    0, 1212,  263,    0,  247,  213,  221,
      1212,  383,  202,  544,  473,  596,  519,  529,  573,  165,
       600,  580,  587,  606, 1212, 1212,   65,  215,  661,  665,
-      669,  673,  677,  679,  688,  696,  692,  704,  175,   84,
-      712, 1212,  629,  632,  648,  673,  677,  689,  694,  684,
+     1212,  669,  673,  677,  679,  688,  696,  692,  704,  175,
+       84,  712,  629,  632,  648,  673,  677,  689,  694,  684,
 
       701,  710,  705,  720,  724,  714,  741,  752,  756,  747,
       733,  762,  766,  775,  788,  792,  782,  798,  806,  802,
@@ -487,8 +482,8 @@ static const flex_int16_t yy_def[297] =
       284,  284,  284,  291,  284,  284,  292,  284,  293,  293,
       284,  293,  294,  294,  294,  295,  284,  284,  284,  284,
       295,  284,  284,  284,  284,  284,  284,  284,  284,  284,
-      284,  284,  284,  284,  284,  284,  284,  284,  296,  296,
-      284,  284,  284,  284,  284,  290,  290,  290,  290,  290,
+      284,  284,  284,  284,  284,  284,  284,  284,  284,  296,
+      296,  284,  284,  284,  284,  290,  290,  290,  290,  290,
 
       290,  290,  290,  290,  290,  290,  290,  290,  290,  290,
       290,  290,  290,  290,  290,  290,  290,  290,  290,  290,
@@ -512,7 +507,7 @@ static const flex_int16_t yy_nxt[1290] =
        43,   44,   43,   45,   36,   46,   47,   48,   49,   50,
        51,   52,   36,   53,   36,   54,   36,   55,   56,   57,
        58,   36,   59,   42,   60,   36,   61,   43,   62,   43,
-       63,   14,   14,   64,   65,   66,   67,   69,   70,  189,
+       63,   14,   14,   64,   65,   66,   67,   69,   70,  190,
        71,   69,   70,  177,   71,   69,   70,   69,   70,  112,
        14,   14,   73,   75,   73,   14,   14,   93,   75,   14,
 
@@ -528,7 +523,7 @@ static const flex_int16_t yy_nxt[1290] =
        80,   80,   80,   80,   80,   80,   80,   80,   80,   80,
 
        80,   80,   80,   80,   80,   80,   80,   80,   14,   14,
-       14,   14,   14,   14,   81,   82,   83,   84,   99,  190,
+       14,   14,   14,   14,   81,   82,   83,   84,   99,  191,
       100,  101,  101,  101,  159,   99,  159,  108,  108,  108,
       108,  102,  103,  233,  117,  104,  230,  105,  118,  103,
       117,  106,  104,  164,  118,  119,  107,  119,  102,  150,
@@ -543,21 +538,21 @@ static const flex_int16_t yy_nxt[1290] =
       113,  114,  115,  116,  172,  172,  195,  132,  113,  114,
       115,  116,  137,  113,  114,  115,  116,  133,  143,  173,
       173,  113,  114,  115,  116,  113,  114,  115,  116,  138,
-      113,  114,  115,  116,   91,  139,  140,  284,   91,  192,
-      140,  284,  190,  119,   90,  119,  113,  114,  115,  116,
-      112,   91,  113,  114,  115,  116,   91,  147,  148,  144,
+      113,  114,  115,  116,   91,  139,  140,  284,   91,  181,
+      140,  284,  191,  119,   90,  119,  113,  114,  115,  116,
+      112,  181,  113,  114,  115,  116,   91,  147,  148,  144,
       119,  176,  149,  145,  119,  161,  161,  162,  112,  159,
       167,  168,  169,  170,  112,  112,  112,  112,  113,  114,
 
-      115,  116,  113,  114,  115,  116,  161,  165,  177,  183,
-      183,   89,  146,  163,  179,  179,  179,  179,  175,  102,
-      181,  181,  181,  181,  160,  105,  193,  193,   99,  106,
-      100,  101,  101,  101,  178,  184,  102,  194,  194,  174,
+      115,  116,  113,  114,  115,  116,  161,  165,  177,  184,
+      184,   89,  146,  163,  179,  179,  179,  179,  175,  102,
+      182,  182,  182,  182,  160,  105,  193,  193,   99,  106,
+      100,  101,  101,  101,  178,  185,  102,  194,  194,  174,
       180,  112,  103,  150,  150,  104,  224,  224,  105,   99,
-      112,  101,  101,  101,  101,  106,  107,  187,  187,  187,
-      164,  103,  185,  103,  185,  112,  104,  186,  186,  186,
-      186,  191,  101,  101,  101,  161,   99,  182,  108,  108,
-      108,  108,  103,  188,  108,  108,  108,  108,  198,  197,
+      112,  101,  101,  101,  101,  106,  107,  188,  188,  188,
+      164,  103,  186,  103,  186,  112,  104,  187,  187,  187,
+      187,  192,  101,  101,  101,  161,   99,  183,  108,  108,
+      108,  108,  103,  189,  108,  108,  108,  108,  198,  197,
       103,  140,  196,  104,  113,  114,  115,  116,  113,  114,
 
       115,  116,  160,  201,  109,  113,  114,  115,  116,  103,
@@ -580,12 +575,12 @@ static const flex_int16_t yy_nxt[1290] =
        89,  113,  114,  115,  116,  113,  114,  115,  116,  167,
       168,  169,  170,  167,  168,  169,  170,  232,  232,  179,
       179,  179,  179,  179,  179,  179,  179,  234,  234,  234,
-      234,  101,  101,  101,  101,  183,  183,  183,  183,  103,
+      234,  101,  101,  101,  101,  184,  184,  184,  184,  103,
 
-      112,  112,  104,  238,  238,  180,  186,  186,  186,  186,
-      187,  187,  187,  235,  236,  236,  236,  236,  103,  239,
-      239,  184,  187,  187,  187,  248,  241,   87,   99,  104,
-      191,  101,  101,  101,  240,   86,  188,  284,  241,  284,
+      112,  112,  104,  238,  238,  180,  187,  187,  187,  187,
+      188,  188,  188,  235,  236,  236,  236,  236,  103,  239,
+      239,  185,  188,  188,  188,  248,  241,   87,   99,  104,
+      192,  101,  101,  101,  240,   86,  189,  284,  241,  284,
       237,  243,  103,  242,  284,  104,  113,  114,  115,  116,
       113,  114,  115,  116,  244,  245,  107,  113,  114,  115,
       116,  103,  113,  114,  115,  116,  246,  113,  114,  115,
@@ -663,7 +658,7 @@ static const flex_int16_t yy_chk[1290] =
 
         9,   10,   10,   15,   47,   15,    9,   29,   10,  177,
        24,   25,   25,   25,   25,   29,   32,   32,   25,   27,
-       27,   27,   27,   34,   34,  248,   27,   27,  190,    7,
+       27,   27,   27,   34,   34,  248,   27,   27,  191,    7,
        36,   36,   36,   36,    8,   44,   44,   85,    9,   85,
        10,   11,   11,   11,   11,   11,   11,   11,   11,   11,
        11,   11,   11,   11,   11,   11,   11,   11,   11,   11,
@@ -673,7 +668,7 @@ static const flex_int16_t yy_chk[1290] =
        11,   11,   11,   11,   11,   11,   11,   11,   11,   11,
 
        11,   11,   11,   11,   11,   11,   11,   11,   11,   11,
-       11,   11,   11,   11,   11,   11,   11,   11,   30,  189,
+       11,   11,   11,   11,   11,   11,   11,   11,   30,  190,
        30,   30,   30,   30,  160,   31,  160,   31,   31,   31,
        31,   30,   30,  178,   37,   30,  170,   30,   37,   31,
        38,   30,   31,  163,   38,   40,   30,   40,   30,   64,
@@ -724,16 +719,16 @@ static const flex_int16_t yy_chk[1290] =
       147,  172,  172,   20,  148,  148,  148,  148,  173,  173,
        19,  149,  149,  149,  149,  150,  150,  150,  150,  166,
       166,  166,  166,  171,  171,  171,  171,  174,  174,  179,
-      179,  179,  179,  180,  180,  180,  180,  181,  181,  181,
-      181,  182,  182,  182,  182,  183,  183,  184,  184,  181,
+      179,  179,  179,  180,  180,  180,  180,  182,  182,  182,
+      182,  183,  183,  183,  183,  184,  184,  185,  185,  182,
 
-      193,  193,  181,  194,  194,  179,  185,  185,  185,  185,
-      187,  187,  187,  181,  186,  186,  186,  186,  181,  195,
-      195,  183,  188,  188,  188,  205,  197,   18,  191,  186,
-      191,  191,  191,  191,  196,   17,  187,   13,  198,    0,
-      186,  200,  191,  199,    0,  191,  196,  196,  196,  196,
-      197,  197,  197,  197,  201,  202,  191,  200,  200,  200,
-      200,  191,  198,  198,  198,  198,  203,  199,  199,  199,
+      193,  193,  182,  194,  194,  179,  186,  186,  186,  186,
+      188,  188,  188,  182,  187,  187,  187,  187,  182,  195,
+      195,  184,  189,  189,  189,  205,  197,   18,  192,  187,
+      192,  192,  192,  192,  196,   17,  188,   13,  198,    0,
+      187,  200,  192,  199,    0,  192,  196,  196,  196,  196,
+      197,  197,  197,  197,  201,  202,  192,  200,  200,  200,
+      200,  192,  198,  198,  198,  198,  203,  199,  199,  199,
       199,  224,  224,    0,  201,  201,  201,  201,  203,  203,
       203,  203,  204,  202,  202,  202,  202,  206,  206,  206,
       206,  207,  210,  204,  204,  204,  204,  205,  205,  205,
@@ -804,7 +799,7 @@ static const flex_int16_t yy_chk[1290] =
 /*******************************************************************************
  * MIT License
  *
- * Copyright (c) 2018 tmtappr@gmail.com
+ * Copyright (c) 2018 cepholution@gmail.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -828,6 +823,9 @@ static const flex_int16_t yy_chk[1290] =
 /**
  * To generate the lexer, run flex on this file: flex colorizelexer.flex
  * This will produce the colorizelexer.yy.c file.
+ *
+ * This file defines a simple lexer grammaer for Python with action code that
+ * adds IRC color codes to tokens.
  */
 
 #pragma warning(disable:4005)
@@ -863,8 +861,8 @@ PyObject *flex_colorize(PyObject *, ColorizerParams *);
     Py_DECREF(pystr); \
     pylast_color = c
 
-#line 861 "colorizelexer.yy.c"
-#line 66 "colorizelexer.flex"
+#line 864 "colorizelexer.yy.c"
+#line 69 "colorizelexer.flex"
     // Code generation options.
 #define YY_NO_INPUT 1
 #define YY_NO_UNISTD_H 1
@@ -900,7 +898,7 @@ PyObject *flex_colorize(PyObject *, ColorizerParams *);
     xid_continue        {xid_start}|{xid_cont_1}|{xid_cont_2}|{xid_cont_3}
     identifier          (_|{xid_start}){xid_continue}*
     */
-#line 923 "colorizelexer.yy.c"
+#line 926 "colorizelexer.yy.c"
 
 #define INITIAL 0
 #define longquotestring 1
@@ -1165,7 +1163,7 @@ YY_DECL
 		}
 
 	{
-#line 132 "colorizelexer.flex"
+#line 135 "colorizelexer.flex"
 
     // Declarations within yylex() scope.
     PyObject *pycolor       = NULL;
@@ -1174,7 +1172,7 @@ YY_DECL
 
     // Lexer rules with blocks of action code inserted into yylex() follow...
 
-#line 1197 "colorizelexer.yy.c"
+#line 1200 "colorizelexer.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1233,7 +1231,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 140 "colorizelexer.flex"
+#line 143 "colorizelexer.flex"
 {
         // Command prompt.
         lappend2(params->origattr_color, yytext);
@@ -1242,7 +1240,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 146 "colorizelexer.flex"
+#line 149 "colorizelexer.flex"
 {
         // Number.
         lappend2(params->number_color, yytext);
@@ -1251,7 +1249,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 152 "colorizelexer.flex"
+#line 155 "colorizelexer.flex"
 {
         // def or class declaration.
         BEGIN(defclassdecl);
@@ -1261,7 +1259,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 159 "colorizelexer.flex"
+#line 162 "colorizelexer.flex"
 {
         // Make class and function names same color as buitins in their 
         // declaration.
@@ -1272,57 +1270,57 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 167 "colorizelexer.flex"
+#line 170 "colorizelexer.flex"
 
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 168 "colorizelexer.flex"
+#line 171 "colorizelexer.flex"
 
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 169 "colorizelexer.flex"
+#line 172 "colorizelexer.flex"
 
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 170 "colorizelexer.flex"
+#line 173 "colorizelexer.flex"
 
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 171 "colorizelexer.flex"
+#line 174 "colorizelexer.flex"
 
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 172 "colorizelexer.flex"
+#line 175 "colorizelexer.flex"
 
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 173 "colorizelexer.flex"
+#line 176 "colorizelexer.flex"
 
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 174 "colorizelexer.flex"
+#line 177 "colorizelexer.flex"
 
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 175 "colorizelexer.flex"
+#line 178 "colorizelexer.flex"
 
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 176 "colorizelexer.flex"
+#line 179 "colorizelexer.flex"
 
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 177 "colorizelexer.flex"
+#line 180 "colorizelexer.flex"
 {
         // Keywords.
         lappend2(params->keyword_color, yytext);
@@ -1331,42 +1329,42 @@ YY_RULE_SETUP
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 183 "colorizelexer.flex"
+#line 186 "colorizelexer.flex"
 
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 184 "colorizelexer.flex"
+#line 187 "colorizelexer.flex"
 
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 185 "colorizelexer.flex"
+#line 188 "colorizelexer.flex"
 
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 186 "colorizelexer.flex"
+#line 189 "colorizelexer.flex"
 
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 187 "colorizelexer.flex"
+#line 190 "colorizelexer.flex"
 
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 188 "colorizelexer.flex"
+#line 191 "colorizelexer.flex"
 
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 189 "colorizelexer.flex"
+#line 192 "colorizelexer.flex"
 
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 190 "colorizelexer.flex"
+#line 193 "colorizelexer.flex"
 {
         // Operators and delimiters.
         lappend2(params->operator_color, yytext);
@@ -1375,7 +1373,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 196 "colorizelexer.flex"
+#line 199 "colorizelexer.flex"
 {
         // Identifier.
         pystr = PyUnicode_FromString(yytext);
@@ -1400,7 +1398,7 @@ case 25:
 yyg->yy_c_buf_p = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 215 "colorizelexer.flex"
+#line 218 "colorizelexer.flex"
 {
         // Comment.
         lappend2(params->comment_color, yytext);
@@ -1410,7 +1408,7 @@ YY_RULE_SETUP
 case 26:
 /* rule 26 can match eol */
 YY_RULE_SETUP
-#line 222 "colorizelexer.flex"
+#line 225 "colorizelexer.flex"
 {
         // Line continuation.
         lappend1(yytext);
@@ -1420,7 +1418,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 229 "colorizelexer.flex"
+#line 232 "colorizelexer.flex"
 {
         // Whitespace.
         lappend1(yytext);
@@ -1430,7 +1428,7 @@ YY_RULE_SETUP
 case 28:
 /* rule 28 can match eol */
 YY_RULE_SETUP
-#line 235 "colorizelexer.flex"
+#line 238 "colorizelexer.flex"
 {
         // Newline.
         lappend1(yytext);
@@ -1440,7 +1438,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 242 "colorizelexer.flex"
+#line 245 "colorizelexer.flex"
 {
         // <longquotestring> BEGIN.
         BEGIN(longquotestring);
@@ -1450,7 +1448,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 249 "colorizelexer.flex"
+#line 252 "colorizelexer.flex"
 {
         // <longquotestring> Allowable characters.
         lappend1(yytext);
@@ -1460,7 +1458,7 @@ YY_RULE_SETUP
 case 31:
 /* rule 31 can match eol */
 YY_RULE_SETUP
-#line 255 "colorizelexer.flex"
+#line 258 "colorizelexer.flex"
 {
         // Add color code to new line.
         lappend1(yytext);
@@ -1470,7 +1468,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 262 "colorizelexer.flex"
+#line 265 "colorizelexer.flex"
 {
         // <longquotestring> END.
         BEGIN(INITIAL);
@@ -1480,7 +1478,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 269 "colorizelexer.flex"
+#line 272 "colorizelexer.flex"
 {
         // <longtickstring> BEGIN.
         BEGIN(longtickstring);
@@ -1490,7 +1488,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 276 "colorizelexer.flex"
+#line 279 "colorizelexer.flex"
 {
         lappend1(yytext);
         break;
@@ -1498,7 +1496,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 281 "colorizelexer.flex"
+#line 284 "colorizelexer.flex"
 {
         // <longtickstring> END.
         BEGIN(INITIAL);
@@ -1508,7 +1506,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 288 "colorizelexer.flex"
+#line 291 "colorizelexer.flex"
 {
         // <shortquotestring> BEGIN.
         BEGIN(shortquotestring);
@@ -1518,7 +1516,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 295 "colorizelexer.flex"
+#line 298 "colorizelexer.flex"
 {
         // <shortquotestring> Allow any character except unescaped newlines.
         lappend1(yytext);
@@ -1528,7 +1526,7 @@ YY_RULE_SETUP
 case 38:
 /* rule 38 can match eol */
 YY_RULE_SETUP
-#line 301 "colorizelexer.flex"
+#line 304 "colorizelexer.flex"
 {
         // Line continuation (escaped newline). Add color code to new line.
         lappend1(yytext);
@@ -1538,7 +1536,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 308 "colorizelexer.flex"
+#line 311 "colorizelexer.flex"
 {
         // <shortquotestring> END.
         BEGIN(INITIAL);
@@ -1548,7 +1546,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 315 "colorizelexer.flex"
+#line 318 "colorizelexer.flex"
 {
         // <shorttickstring> BEGIN.
         BEGIN(shorttickstring);
@@ -1558,7 +1556,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 322 "colorizelexer.flex"
+#line 325 "colorizelexer.flex"
 {
         lappend1(yytext);
         break;
@@ -1566,7 +1564,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 327 "colorizelexer.flex"
+#line 330 "colorizelexer.flex"
 {
         // <shorttickstring> END.
         BEGIN(INITIAL);
@@ -1576,10 +1574,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 334 "colorizelexer.flex"
+#line 337 "colorizelexer.flex"
 ECHO;
 	YY_BREAK
-#line 1602 "colorizelexer.yy.c"
+#line 1605 "colorizelexer.yy.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(longquotestring):
 case YY_STATE_EOF(longtickstring):
@@ -2753,7 +2751,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 334 "colorizelexer.flex"
+#line 337 "colorizelexer.flex"
 
 
 /**

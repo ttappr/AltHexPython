@@ -139,7 +139,7 @@ identifier          {lax_start}{lax_continue}*
 
     // Lexer rules with blocks of action code inserted into yylex() follow...
 
-">>>" {
+">>>"|"..." {
         // Command prompt.
         lappend2(params->origattr_color, yytext);
         break;
@@ -189,7 +189,7 @@ del  {
 "["|"]"|"{"|"}"
 ","|":"|"."|";"
 "="|"+="|"-="|"*="|"/="|"//="|"%="|"@="
-"&="|"|="|"^="|">>="|"<<="|"**="|"..."  {
+"&="|"|="|"^="|">>="|"<<="|"**="  {
         // Operators and delimiters.
         lappend2(params->operator_color, yytext);
         break;

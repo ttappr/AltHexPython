@@ -34,6 +34,13 @@
  */
 
 #include "minpython.h"
+#include <node.h>
+/*
+#include <errcode.h>
+#include <grammar.h>
+#include <parsetok.h>
+#include <compile.h>
+*/
 
 /**
  * Data for the console and single global instance of the console interpreter.
@@ -44,17 +51,21 @@ typedef struct {
     hexchat_hook    *your_msg_hook;
     hexchat_hook    *srvr_msg_hook;
     hexchat_hook    *closectx_hook;
+    hexchat_hook    *keypress_hook;
     PyObject        *globals;
     PyObject        *locals;
+    PyObject        *scriptbuf;
+    int             contmode;
 } ConsoleData;
 
 /**
  * The Console instance.
  */
 static ConsoleData console_interp_data = { NULL, NULL, NULL, NULL, 
-                                           NULL, NULL, NULL };
+                                           NULL, NULL, NULL, NULL, NULL, 0 };
 
 static int python_command_callback  (char *[], void *);
+static int keypress_callback        (char *[], void *);
 static int server_text_callback     (char *[], void *);
 static int close_context_callback   (char *[], void *);
 int        create_console_interp    (void);
@@ -62,6 +73,8 @@ int        delete_console_interp    (void);
 int        exec_console_command     (const char *);
 int        create_console           (void);
 int        close_console            (void);
+
+//static int is_complete              (const char *);
 
 /**
  * Callback passed to create_interp(). Sets the module name and sets up stdout
@@ -88,6 +101,7 @@ create_callback(PyThreadState *ts, void *userdata)
     data->threadstate = ts;
     data->globals     = pyglobals;
     data->locals      = pyglobals;
+    data->scriptbuf   = PyList_New(0);
     
     pymodname = PyUnicode_FromString("Console");
     PyDict_SetItemString(pyglobals, "__module_name__", pymodname);
@@ -125,6 +139,7 @@ delete_callback(PyThreadState *ts, void *userdata)
     ConsoleData *data = (ConsoleData *)userdata;
     
     Py_DECREF(data->globals);
+    Py_DECREF(data->scriptbuf);
 
     data->globals       = NULL;
     data->locals        = NULL;
@@ -158,8 +173,16 @@ exec_console_command(const char *script)
 {
     ConsoleData     *data;
     SwitchTSInfo    tsinfo;
-    PyObject        *pyresult, *pystr;
-    int             retval;
+    PyObject        *pyresult;
+    PyObject        *pystr;
+    PyObject        *pyscript;
+    PyObject        *pyempstr;
+    PyObject        *pyerrtype;
+    PyObject        *pyerrval;
+    PyObject        *pytraceback;
+    PyObject        *pyerrmsg;
+    int             retval = 0;
+    struct _node    *retnode;
 
     data = &console_interp_data;
 
@@ -168,28 +191,132 @@ exec_console_command(const char *script)
 
     pystr = PyUnicode_FromFormat("%s\n", script);
 
-    // Print command.
-    PySys_FormatStdout(">>> %U", pystr);
-
-    // Run command.
-    pyresult = PyRun_String(PyUnicode_AsUTF8(pystr), Py_single_input,
-                            data->globals, data->locals);
-    Py_DECREF(pystr);
-
-    if (!pyresult) {
-        PyErr_Print();
-        retval = -1;
+    if (data->contmode == 0) {
+        // Print first line of statement.
+        PySys_FormatStdout(">>> %U", pystr);
+        pyscript = pystr;
+        
+        Py_INCREF(pystr);
     }
     else {
-        Py_DECREF(pyresult);
-        retval = 0;
+        if (data->contmode == 1) {
+            // Print continuing line of script.
+            PySys_FormatStdout("... %U", pystr);
+        }
+
+        // If there are partials in scriptbuf, join them in.
+        PyList_Append(data->scriptbuf, pystr);
+
+        pyempstr = PyUnicode_FromString("");
+        pyscript = PyUnicode_Join(pyempstr, data->scriptbuf);
+
+        Py_DECREF(pyempstr);
     }
 
+    // Parse script to see if it's complete or partial.
+    retnode = PyParser_SimpleParseString(PyUnicode_AsUTF8(pyscript),
+                                         Py_file_input);
+    
+    // To allow GDB to attach to hexchat:
+    // $ echo 0 > /proc/sys/kernel/yama/ptrace_scope
+                                         
+    if (retnode == NULL) {
+        // Determine if script is incomplete. If so, append it to
+        // self->scriptbuf. If not print error.
+
+        if (PyErr_ExceptionMatches(PyExc_SyntaxError)) {
+
+            PyErr_Fetch(&pyerrtype, &pyerrval, &pytraceback);
+            PyErr_NormalizeException(&pyerrtype, &pyerrval, &pytraceback);
+
+            pyerrmsg = PyObject_GetAttrString(pyerrval, "msg");
+
+            if (!PyUnicode_CompareWithASCIIString(
+                    pyerrmsg, "unexpected EOF while parsing")) {
+                        
+                // pystr is a partial statement. Add it to the list of
+                // partials if it hasn't already been.
+                if (data->contmode == 0) {
+                    PyList_Append(data->scriptbuf, pystr);
+                    data->contmode = 1;
+                }
+
+                Py_DECREF(pyerrmsg);
+                Py_DECREF(pyerrtype);
+                Py_DECREF(pyerrval);
+                Py_XDECREF(pytraceback);
+                retval = 0;
+            }
+            else {
+                PyErr_Restore(pyerrtype, pyerrval, pytraceback);
+                PyErr_Print();
+                Py_DECREF(data->scriptbuf);
+                data->contmode = 0;
+                data->scriptbuf = PyList_New(0);
+                retval = -1;
+            }
+        }
+        else {
+            PyErr_Print();
+            Py_DECREF(data->scriptbuf);
+            data->contmode = 0;
+            data->scriptbuf = PyList_New(0);
+            retval = -1;
+        }
+    }
+    else if (data->contmode == 0 || data->contmode == 2) {
+        PyNode_Free(retnode);
+        Py_DECREF(data->scriptbuf);
+        data->contmode = 0;
+        data->scriptbuf = PyList_New(0);
+
+        pyresult = PyRun_String(PyUnicode_AsUTF8(pyscript),
+                                Py_file_input, //Py_single_input,
+                                data->globals,
+                                data->locals);
+        if (!pyresult) {
+            PyErr_Print();
+            retval = -1;
+        }
+        else {
+            Py_DECREF(pyresult);
+            retval = 0;
+        }
+    }
+
+    Py_DECREF(pyscript);
+    Py_DECREF(pystr);
+    
     // Switch back.
     switch_threadstate_back(tsinfo);
 
     return retval;
 }
+
+/**
+ * Tests Python script for completion.
+ * @param script    - The script to check.
+ * @returns         - 1 = complete, 0 = incomplete, -1 = error.
+ */
+/*
+int
+is_complete(const char *script)
+{
+    node       *n;
+    perrdetail  e;
+
+    //n = PyParser_ParseString(script, &_PyParser_Grammar, Py_file_input, &e);
+
+    if (!n) {
+        if (e.error == E_EOF) {
+            return 0;
+        }
+        return -1;
+    }
+    PyNode_Free(n);
+    return 1;
+}
+*/
 
 /**
  * Opens the console widow.
@@ -229,6 +356,10 @@ create_console()
     data->your_msg_hook = hexchat_hook_print(
                             ph, "Your Message", HEXCHAT_PRI_NORM, 
                             python_command_callback, data);
+                            
+    data->keypress_hook = hexchat_hook_print(
+                            ph, "key press", HEXCHAT_PRI_NORM,
+                            keypress_callback, data);
 
     data->srvr_msg_hook = hexchat_hook_print(
                             ph, "Server Text", HEXCHAT_PRI_NORM,
@@ -287,6 +418,35 @@ python_command_callback(char *word[], void *userdata)
     return HEXCHAT_EAT_ALL;
 }
 
+int
+keypress_callback(char *word[], void *userdata)
+{
+    ConsoleData     *data;
+    hexchat_context *ctx;
+    const char      *inbox;
+    static char     *entkey = "65293";
+    
+    data = (ConsoleData *)userdata;
+    
+    ctx = hexchat_get_context(ph);
+    
+    if (ctx != data->console_ctx) {
+        return HEXCHAT_EAT_NONE;
+    }
+    
+    if ((data->contmode == 1) && (!strcmp(entkey, word[1]))) {
+        inbox = hexchat_get_info(ph, "inputbox");
+        if (strlen(inbox) == 0) {
+            // This is the end of the script being built.
+            data->contmode = 2;
+            exec_console_command("\n");
+			hexchat_print(ph, "\n");
+        }
+    }
+    
+    return HEXCHAT_EAT_NONE;
+}
+
 /**
  * Suppresses server text messages in the console window.
  * @param word      - Word data received from event.
@@ -333,11 +493,13 @@ close_context_callback(char *word[], void *userdata)
     }
 
     hexchat_unhook(ph, data->srvr_msg_hook);
+    hexchat_unhook(ph, data->keypress_hook);
     hexchat_unhook(ph, data->your_msg_hook);
     hexchat_unhook(ph, data->closectx_hook);
 
     data->console_ctx   = NULL;
     data->srvr_msg_hook = NULL;
+    data->keypress_hook = NULL;
     data->your_msg_hook = NULL;
     data->closectx_hook = NULL;
 
