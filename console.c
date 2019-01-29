@@ -35,12 +35,9 @@
 
 #include "minpython.h"
 #include <node.h>
-/*
-#include <errcode.h>
-#include <grammar.h>
-#include <parsetok.h>
-#include <compile.h>
-*/
+
+typedef enum {INITIAL=0, MULTILINE, FINISH} ContinueMode;
+
 
 /**
  * Data for the console and single global instance of the console interpreter.
@@ -55,14 +52,15 @@ typedef struct {
     PyObject        *globals;
     PyObject        *locals;
     PyObject        *scriptbuf;
-    int             contmode;
+    ContinueMode    contmode;
 } ConsoleData;
 
 /**
  * The Console instance.
  */
 static ConsoleData console_interp_data = { NULL, NULL, NULL, NULL, 
-                                           NULL, NULL, NULL, NULL, NULL, 0 };
+                                           NULL, NULL, NULL, NULL, NULL, 
+                                           INITIAL };
 
 static int python_command_callback  (char *[], void *);
 static int keypress_callback        (char *[], void *);
@@ -191,7 +189,7 @@ exec_console_command(const char *script)
 
     pystr = PyUnicode_FromFormat("%s\n", script);
 
-    if (data->contmode == 0) {
+    if (data->contmode == INITIAL) {
         // Print first line of statement.
         PySys_FormatStdout(">>> %U", pystr);
         pyscript = pystr;
@@ -199,7 +197,7 @@ exec_console_command(const char *script)
         Py_INCREF(pystr);
     }
     else {
-        if (data->contmode == 1) {
+        if (data->contmode == MULTILINE) {
             // Print continuing line of script.
             PySys_FormatStdout("... %U", pystr);
         }
@@ -236,9 +234,9 @@ exec_console_command(const char *script)
                         
                 // pystr is a partial statement. Add it to the list of
                 // partials if it hasn't already been.
-                if (data->contmode == 0) {
+                if (data->contmode == INITIAL) {
                     PyList_Append(data->scriptbuf, pystr);
-                    data->contmode = 1;
+                    data->contmode = MULTILINE;
                 }
 
                 Py_DECREF(pyerrtype);
@@ -259,11 +257,11 @@ exec_console_command(const char *script)
     else {
         PyNode_Free(retnode);
     }
-    if (data->contmode != 1) {
-        if (data->contmode == 2) {
+    if (data->contmode != MULTILINE) {
+        if (data->contmode == FINISH) {
             Py_DECREF(data->scriptbuf);
             data->scriptbuf = PyList_New(0);
-            data->contmode = 0;            
+            data->contmode = INITIAL;            
         }
 
         pyresult = PyRun_String(PyUnicode_AsUTF8(pyscript),
@@ -282,7 +280,7 @@ exec_console_command(const char *script)
         PyErr_Print();
         Py_DECREF(data->scriptbuf);
         data->scriptbuf = PyList_New(0);
-        data->contmode = 0;
+        data->contmode = INITIAL;
     }
 
     Py_DECREF(pyscript);
@@ -435,11 +433,11 @@ keypress_callback(char *word[], void *userdata)
         return HEXCHAT_EAT_NONE;
     }
     
-    if ((data->contmode == 1) && (!strcmp(entkey, word[1]))) {
+    if ((data->contmode == MULTILINE) && (!strcmp(entkey, word[1]))) {
         inbox = hexchat_get_info(ph, "inputbox");
         if (strlen(inbox) == 0) {
             // This is the end of the script being built.
-            data->contmode = 2;
+            data->contmode = FINISH;
             exec_console_command("\n");
             hexchat_print(ph, "\n");
         }
