@@ -257,6 +257,7 @@ PyInit_hexchat(void)
     PyObject    *pymodule;
     PyObject    *pyvertuple;
     PyObject    *pyproxy;
+    int         i;
     
     // List of types/classes provided by the hexchat module that need to be 
     // registered below.
@@ -379,7 +380,7 @@ PyInit_hexchat(void)
 
     // Register the classes/types provided by the hexchat module. 
 
-    for (int i = 0; types_to_register[i] != NULL; i += 2) {
+    for (i = 0; types_to_register[i] != NULL; i += 2) {
         if (PyType_Ready((PyTypeObject *)types_to_register[i + 1]) < 0) {
             hexchat_printf(ph,
                            "\0034Error encountered registering hexchat.%s.",
@@ -522,6 +523,7 @@ PyObject *
 py_emit_print(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     int         retval;
+    int         i;
     PyObject    *pyevent_name;
     PyObject    *pyarg[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
     const char  *arg[6]   = { NULL, NULL, NULL, NULL, NULL, NULL };
@@ -538,7 +540,7 @@ py_emit_print(PyObject *self, PyObject *args, PyObject *kwargs)
                                      &pyarg[4], &pyarg[5])) {
         return NULL;
     }
-    for (int i = 0; i < 6 && pyarg[i]; i++) {
+    for (i = 0; i < 6 && pyarg[i]; i++) {
         arg[i] = PyUnicode_AsUTF8(pyarg[i]);
     }
     retval = hexchat_emit_print(ph, 
@@ -556,6 +558,7 @@ PyObject *
 py_emit_print_attrs(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     int                 retval;
+    int                 i;
     PyObject            *pyattrs;
     PyObject            *pytime;
     hexchat_event_attrs attrs;
@@ -587,7 +590,7 @@ py_emit_print_attrs(PyObject *self, PyObject *args, PyObject *kwargs)
 
     Py_DECREF(pytime);
 
-    for (int i = 0; i < 6 && pyarg[i]; i++) {
+    for (i = 0; i < 6 && pyarg[i]; i++) {
         arg[i] = PyUnicode_AsUTF8(pyarg[i]);
     }
 
@@ -609,6 +612,7 @@ py_send_modes(PyObject *self, PyObject *args, PyObject *kwargs)
     Py_ssize_t  ntargets;
     int         modes_per_line;
     int         sign, mode;
+    int         i;
     PyObject    *pytarget;
     static char *keywords[] = { "targets", "modes_per_line", "sign", "mode", 
                                 NULL };
@@ -626,7 +630,7 @@ py_send_modes(PyObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
     // TODO - Check length and set error if too large.
-    for (int i = 0; i < MAX_WORD_ARRAY_LEN && i < ntargets; i++) {
+    for (i = 0; i < MAX_WORD_ARRAY_LEN && i < ntargets; i++) {
         pytarget = PySequence_GetItem(pytargets, i); // NR.
         if (!pytarget) {
             return NULL;
@@ -831,6 +835,7 @@ py_get_list(PyObject *self, PyObject *args)
     PyObject    *pyargs;
     PyObject    *pylist;
     Py_ssize_t  len;
+    Py_ssize_t  i;
     
     if (main_thread_check()) {
         return NULL;
@@ -866,7 +871,7 @@ py_get_list(PyObject *self, PyObject *args)
         // Build arguments for the nametuple type constructor.
         pyargs = PyTuple_New(len);
 
-        for (Py_ssize_t i = 0; i < len; i++) {
+        for (i = 0; i < len; i++) {
             pyname = PyTuple_GetItem(pyname_tupl, i);   // BR.
             pyattr = PyObject_GetAttr(pyitem, pyname);  // NR.
             PyTuple_SetItem(pyargs, i, pyattr);         // Steals ref.
@@ -900,6 +905,7 @@ py_list_fields(PyObject *self, PyObject *args)
     PyObject            *pyname;
     PyObject            *pystr;
     PyObject            *pybytes;
+    int                 i;
     
     if (main_thread_check()) {
         return NULL;
@@ -913,7 +919,7 @@ py_list_fields(PyObject *self, PyObject *args)
         return NULL;
     }
     pyretval = PyList_New(0);
-    for (int i = 0; retval[i] != NULL; i++) {
+    for (i = 0; retval[i] != NULL; i++) {
         pybytes = PyBytes_FromString(retval[i]);
         pystr   = PyUnicode_FromEncodedObject(pybytes, "utf-8", "replace");
         PyList_Append(pyretval, pystr);
@@ -1388,6 +1394,7 @@ py_list_pluginpref(PyObject *self, PyObject *Py_UNUSED(args))
     #define     LIST_SIZE 4096
     char        dest[LIST_SIZE];
     int         ret;
+    Py_ssize_t  i;
     PyObject    *pyplugin;
     PyObject    *pykey;
     PyObject    *pystr;
@@ -1423,7 +1430,7 @@ py_list_pluginpref(PyObject *self, PyObject *Py_UNUSED(args))
 
         // Build a list specific to the plugin by matching the first part of
         // the var name to the plugin name.
-        for (Py_ssize_t i = 0; i < size - 1; i++) {
+        for (i = 0; i < size - 1; i++) {
             pystr  = PyList_GetItem(pylst, i); // BR.
             pybool = PyObject_CallMethod(pystr, "startswith", "O", pykey);
 
@@ -1516,6 +1523,7 @@ hc_all_callback_inner(CB_VER ver, char *word[], char *word_eol[],
     Py_ssize_t      py_len;
     PyObject        *pyret;
     int             retval      = 0;
+    int             i;
     CallbackData    *data;
     SwitchTSInfo    tsinfo;
 
@@ -1533,7 +1541,7 @@ hc_all_callback_inner(CB_VER ver, char *word[], char *word_eol[],
     // Convert the word[] array to a Python list.
     if (ver & (CBV_PRNT | CBV_PRNT_ATTR | CBV_CMD | CBV_SRV | CBV_SRV_ATTR)) {
         pyword = PyList_New(0);
-        for (int i = 1; word[i] && strcmp("", word[i]); i++) {
+        for (i = 1; word[i] && strcmp("", word[i]); i++) {
             // Need to grab text as a bytes object first so it can be decoded
             // replacing bad values with '\U0000fffd'.
             pybytes = PyBytes_FromString(word[i]);
@@ -1546,7 +1554,7 @@ hc_all_callback_inner(CB_VER ver, char *word[], char *word_eol[],
     // Convert the word_eol[] array (if it exists) to a Python list.
     if (ver & (CBV_CMD | CBV_SRV | CBV_SRV_ATTR)) {
         pyword_eol = PyList_New(0);
-        for (int i = 1; word_eol[i] && strcmp("", word_eol[i]); i++) {
+        for (i = 1; word_eol[i] && strcmp("", word_eol[i]); i++) {
             pybytes = PyBytes_FromString(word_eol[i]);
             pystr   = PyUnicode_FromEncodedObject(pybytes, "utf-8", "replace");
             PyList_Append(pyword_eol, pystr);
@@ -1560,7 +1568,7 @@ hc_all_callback_inner(CB_VER ver, char *word[], char *word_eol[],
         pyword_eol  = PyList_New(py_len);
         pysep       = PyUnicode_FromString(" ");
 
-        for (Py_ssize_t i = 0; i < py_len; i++) {
+        for (i = 0; i < py_len; i++) {
             pyslice = PyList_GetSlice(pyword, i, py_len);
             pystr   = PyUnicode_Join(pysep, pyslice);
             

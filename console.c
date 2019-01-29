@@ -28,6 +28,9 @@
  * command /MPY EXEC passes text to it for execution from any window. There is
  * an interactive Console window that can be brought up via /MPY CONSOLE.
  * The same subinterpreter exists across all windows, including the Console.
+ *
+ * See notes at the top of outstream.c for how to customize the colorizer
+ * colors.
  */
 
 #include "minpython.h"

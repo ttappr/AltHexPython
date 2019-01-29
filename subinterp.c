@@ -172,6 +172,7 @@ delete_interp(PyThreadState *ts, interp_config_func configfunc, void *data)
     PyObject    *pyuserdata;
     PyObject    *pyret;
     Py_ssize_t  size;
+    int         i;
     UnhookEventData *evt_data;
     
     tsinfo = switch_threadstate(ts);
@@ -189,7 +190,7 @@ delete_interp(PyThreadState *ts, interp_config_func configfunc, void *data)
         size = PyObject_Length(pyunload_hooks);
         
         // Invoke callbacks for the unload event.
-        for (int i = 0; i < size; i++) {
+        for (i = 0; i < size; i++) {
             pycap      = PyList_GetItem(pyunload_hooks, i); // BR
             
             evt_data   = PyCapsule_GetPointer(pycap, "unload_hook");

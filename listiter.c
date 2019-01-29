@@ -389,6 +389,7 @@ listiter_create_lists_info_dict()
     PyObject            *pyfield_names;
     PyObject            *pylist_info;
     int                 llen;
+    int                 i, j;
     PyObject            *pyfname;
     PyObject            *pyftype;
     const char *const   *list_fields;
@@ -399,7 +400,7 @@ listiter_create_lists_info_dict()
     // Iterate over the list names, populating a dictionary keyed on list name
     // with tuple values. The tuples have a list of field names and a dictionary
     // of field types (keyed on field name).
-    for (int i = 0; list_types[i] != NULL; i++) {
+    for (i = 0; list_types[i] != NULL; i++) {
 
         list_fields = hexchat_list_fields(ph, list_types[i]);
         pyfield_dict = PyDict_New();
@@ -407,7 +408,7 @@ listiter_create_lists_info_dict()
         // Populate the field-type-dict - keyed on field name with data type 
         // values.
         llen = 0;
-        for (int j = 0; list_fields[j] != NULL; j++, llen++) {
+        for (j = 0; list_fields[j] != NULL; j++, llen++) {
 
             // The field name starts after the first character.
             pyfname = PyUnicode_FromString(&list_fields[j][1]);
@@ -423,7 +424,7 @@ listiter_create_lists_info_dict()
         // Construct the list of field names.
         pyfield_names = PyTuple_New(llen);
 
-        for (int j = 0; j < llen; j++) {
+        for (j = 0; j < llen; j++) {
             PyTuple_SetItem(pyfield_names, j,
                             PyUnicode_FromString(&list_fields[j][1]));
         }
