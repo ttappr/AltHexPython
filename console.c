@@ -220,7 +220,7 @@ exec_console_command(const char *script)
     // To allow GDB to attach to hexchat:
     // $ echo 0 > /proc/sys/kernel/yama/ptrace_scope
                                          
-    if (retnode == NULL) {
+    if (!retnode) {
         // Determine if script is incomplete. If so, append it to
         // self->scriptbuf. If not print error.
 
@@ -264,11 +264,15 @@ exec_console_command(const char *script)
             retval = -1;
         }
     }
-    else if (data->contmode == 0 || data->contmode == 2) {
+    else {
         PyNode_Free(retnode);
-        Py_DECREF(data->scriptbuf);
-        data->contmode = 0;
-        data->scriptbuf = PyList_New(0);
+    }
+    if (data->contmode != 1) {
+        if (data->contmode == 2) {
+            Py_DECREF(data->scriptbuf);
+            data->scriptbuf = PyList_New(0);
+            data->contmode = 0;            
+        }
 
         pyresult = PyRun_String(PyUnicode_AsUTF8(pyscript),
                                 Py_single_input,
