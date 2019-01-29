@@ -444,7 +444,7 @@ keypress_callback(char *word[], void *userdata)
             // This is the end of the script being built.
             data->contmode = 2;
             exec_console_command("\n");
-			hexchat_print(ph, "\n");
+            hexchat_print(ph, "\n");
         }
     }
     
