@@ -30,7 +30,7 @@
  * The same subinterpreter exists across all windows, including the Console.
  *
  * See notes at the top of outstream.c for how to customize the colorizer
- * colors.
+ * colors. The Console supports multi-line code blocks.
  */
 
 #include "minpython.h"
@@ -214,13 +214,10 @@ exec_console_command(const char *script)
     // Parse script to see if it's complete or partial.
     retnode = PyParser_SimpleParseString(PyUnicode_AsUTF8(pyscript),
                                          Py_file_input);
-    
-    // To allow GDB to attach to hexchat:
-    // $ echo 0 > /proc/sys/kernel/yama/ptrace_scope
                                          
     if (!retnode) {
         // Determine if script is incomplete. If so, append it to
-        // self->scriptbuf. If not print error.
+        // self->scriptbuf and change mode to MULTILINE. If not print error.
 
         if (PyErr_ExceptionMatches(PyExc_SyntaxError)) {
 
@@ -264,6 +261,7 @@ exec_console_command(const char *script)
             data->contmode = INITIAL;            
         }
 
+        // We have a completed code block - execute it.
         pyresult = PyRun_String(PyUnicode_AsUTF8(pyscript),
                                 Py_single_input,
                                 data->globals,
@@ -292,30 +290,6 @@ exec_console_command(const char *script)
     return retval;
 }
 
-/**
- * Tests Python script for completion.
- * @param script    - The script to check.
- * @returns         - 1 = complete, 0 = incomplete, -1 = error.
- */
-/*
-int
-is_complete(const char *script)
-{
-    node       *n;
-    perrdetail  e;
-
-    //n = PyParser_ParseString(script, &_PyParser_Grammar, Py_file_input, &e);
-
-    if (!n) {
-        if (e.error == E_EOF) {
-            return 0;
-        }
-        return -1;
-    }
-    PyNode_Free(n);
-    return 1;
-}
-*/
 
 /**
  * Opens the console widow.
@@ -417,6 +391,13 @@ python_command_callback(char *word[], void *userdata)
     return HEXCHAT_EAT_ALL;
 }
 
+/**
+ * Callback for key press event. Ignores all key presses except hitting [enter]
+ * when the input box is empty and the Console is in the MULTILINE state.
+ * @param word      - Word data for the event.
+ * @param userdata  - The ConsoleData pointer of the Console instance.
+ * @returns - HEXCHAT_EAT_NONE.
+ */
 int
 keypress_callback(char *word[], void *userdata)
 {
