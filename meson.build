@@ -10,7 +10,7 @@ endif
 shared_module('minpython', 'minpython.c', 'asyncresult.c', 'colorizelexer.yy.c', 
               'console.c', 'context.c', 'delegate.c', 'delegateproxy.c', 
               'eventattrs.c', 'listiter.c', 'outstream.c', 'plugin.c', 
-              'subinterp.c',
+              'subinterp.c', 'maininterp.c',
   dependencies: [libgio_dep, hexchat_plugin_dep, python_dep, flex_dep],
   install: true,
   install_dir: plugindir,

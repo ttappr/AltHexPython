@@ -42,6 +42,7 @@ typedef struct {
     PyObject *obj;
     PyObject *cache;
     int      is_async;
+    int      is_main;
 } DelegateProxyObj;
 
 static int      DelegateProxy_init       (DelegateProxyObj *, PyObject *, 
@@ -54,6 +55,7 @@ static PyObject *DelegateProxy_wrapped   (DelegateProxyObj *, void *);
 static Py_hash_t DelegateProxy_hash      (DelegateProxyObj *);
 static PyObject *DelegateProxy_cmp       (DelegateProxyObj *, PyObject *, int);
 static PyObject *DelegateProxy_repr      (DelegateProxyObj *, PyObject *);
+
 
 /**
  * DelegateProxy instance members.
@@ -131,12 +133,17 @@ DelegateProxy_init(DelegateProxyObj *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *pywrapped;
     int      is_async = false;
+    int      is_main  = false;
 
-    if (!PyArg_ParseTuple(args, "O|p:__init__",  &pywrapped, &is_async)) {
+    static char *keywords[] = { "obj", "is_async", "is_main", NULL };
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|pp:__init__", keywords,
+                                     &pywrapped, &is_async, &is_main)) {
         return -1;
     }
     self->obj         = pywrapped;
     self->is_async    = is_async;
+    self->is_main     = is_main;
     self->cache       = PyDict_New();
 
     Py_INCREF(pywrapped);
@@ -311,4 +318,6 @@ DelegateProxy_hash(DelegateProxyObj *self)
     
     return hash1 + hash2;
 }
+
+
 

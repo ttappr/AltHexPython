@@ -112,6 +112,7 @@ extern PyTypeObject *ListIterTypePtr;
 extern PyTypeObject *DelegateTypePtr;
 extern PyTypeObject *DelegateProxyTypePtr;
 extern PyTypeObject *AsyncResultTypePtr;
+extern PyTypeObject *MainInterpTypePtr;
 
 /**
  * Python functions declared in minpython.c needed by context.c
@@ -186,6 +187,7 @@ extern int  init_plugins            (void);
 extern int  delete_plugins          (void);
 extern int  load_plugin             (char *);
 extern int  unload_plugin           (char *);
+
 
 /**
  * Functions declared in subinterp.c.

@@ -268,6 +268,7 @@ PyInit_hexchat(void)
         "DelegateProxy",    DelegateProxyTypePtr,
         "EventAttrs",       EventAttrsTypePtr,
         "ListIter",         ListIterTypePtr,
+        "MainInterp",       MainInterpTypePtr,
         "OutStream",        OutStreamTypePtr,
         NULL, NULL
     };

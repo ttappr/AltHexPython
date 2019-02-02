@@ -37,9 +37,10 @@
  */
 typedef struct {
     PyObject_HEAD
-    PyObject *callable;
-    PyObject *queue_constr;
-    int      is_async;
+    PyObject        *callable;
+    PyObject        *queue_constr;
+    int             is_async;
+    int             is_main;
 } DelegateObj;
 
 /**
@@ -117,10 +118,12 @@ Delegate_init(DelegateObj *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *pycallable    = NULL;
     int      is_async       = false;    
-    static char *keywords[] = { "callable", "is_async", NULL };
+    int      is_main        = false;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|p:init", keywords, 
-                                     &pycallable, &is_async)) {
+    static char *keywords[] = { "callable", "is_async", "is_main", NULL };
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|pp:init", keywords,
+                                     &pycallable, &is_async, &is_main)) {
         return -1;
     }
     if (PyCallable_Check(pycallable) == 0) {
@@ -130,6 +133,7 @@ Delegate_init(DelegateObj *self, PyObject *args, PyObject *kwargs)
     }
     self->callable = pycallable;
     self->is_async = is_async;
+    self->is_main  = is_main;
 
     Py_INCREF(pycallable);
     
@@ -390,7 +394,6 @@ Delegate_get_is_async(DelegateObj *self, void *closure)
     }
     Py_RETURN_FALSE;
 }
-
 
 
 
