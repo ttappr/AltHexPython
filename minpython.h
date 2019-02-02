@@ -113,6 +113,8 @@ extern PyTypeObject *DelegateTypePtr;
 extern PyTypeObject *DelegateProxyTypePtr;
 extern PyTypeObject *AsyncResultTypePtr;
 extern PyTypeObject *MainInterpTypePtr;
+extern PyTypeObject *InterpCallTypePtr;
+extern PyTypeObject *InterpObjProxyTypePtr;
 
 /**
  * Python functions declared in minpython.c needed by context.c

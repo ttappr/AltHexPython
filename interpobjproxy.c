@@ -23,12 +23,12 @@
  ******************************************************************************/
 
 /**
- * A DelegateProxy wraps objects and provides Delegates for their methods
- * or functions. There are two ready-made DelegateProxy's provided by the
+ * A InterpObjProxy wraps objects and provides Delegates for their methods
+ * or functions. There are two ready-made InterpObjProxy's provided by the
  * hexchat module: 'hexchat.synchronous' and 'hexchat.asynchronous'. Each
- * provides Delegates for the hexchat API. The synchronous DelegateProxy
+ * provides Delegates for the hexchat API. The synchronous InterpObjProxy
  * provides synchronous Delegates for the API, and the asynchronous
- * DelegateProxy provides asynchronous Delegates. DelegateProxy's can be
+ * InterpObjProxy provides asynchronous Delegates. InterpObjProxy's can be
  * created to wrap any arbitrary object if desired.
  */
 
@@ -39,126 +39,133 @@
  */
 typedef struct {
     PyObject_HEAD
-    PyObject *obj;
-    PyObject *cache;
-    int      is_async;
-} DelegateProxyObj;
+    PyObject      *obj;
+    PyObject      *cache;
+    PyObject      *tscap;
+    PyThreadState *threadstate;
+} InterpObjProxyObj;
 
-static int      DelegateProxy_init       (DelegateProxyObj *, PyObject *, 
-                                                              PyObject *);
-static void     DelegateProxy_dealloc    (DelegateProxyObj *);
-static PyObject *DelegateProxy_getattro  (DelegateProxyObj *, PyObject *);
-static PyObject *DelegateProxy_dir       (DelegateProxyObj *);
-static PyObject *DelegateProxy_is_async  (DelegateProxyObj *, void *);
-static PyObject *DelegateProxy_wrapped   (DelegateProxyObj *, void *);
-static Py_hash_t DelegateProxy_hash      (DelegateProxyObj *);
-static PyObject *DelegateProxy_cmp       (DelegateProxyObj *, PyObject *, int);
-static PyObject *DelegateProxy_repr      (DelegateProxyObj *, PyObject *);
+static int      InterpObjProxy_init      (InterpObjProxyObj *, PyObject *,
+                                                               PyObject *);
+static void     InterpObjProxy_dealloc   (InterpObjProxyObj *);
+static PyObject *InterpObjProxy_getattro (InterpObjProxyObj *, PyObject *);
+static PyObject *InterpObjProxy_dir      (InterpObjProxyObj *);
+static PyObject *InterpObjProxy_wrapped  (InterpObjProxyObj *, void *);
+static Py_hash_t InterpObjProxy_hash     (InterpObjProxyObj *);
+static PyObject *InterpObjProxy_cmp      (InterpObjProxyObj *, PyObject *, int);
+static PyObject *InterpObjProxy_repr     (InterpObjProxyObj *, PyObject *);
 
 
 /**
- * DelegateProxy instance members.
+ * InterpObjProxy instance members.
  */
-static PyMemberDef DelegateProxy_members[] = {
+static PyMemberDef InterpObjProxy_members[] = {
     { NULL }
 };
 
 /**
- * DelegateProxy methods.
+ * InterpObjProxy methods.
  */
-static PyMethodDef DelegateProxy_methods[] = {
-    {"__dir__",   (PyCFunction)DelegateProxy_dir,      METH_NOARGS,
-     "Returns attributes of DelegateProxy, which include the attributes of the "
+static PyMethodDef InterpObjProxy_methods[] = {
+    {"__dir__",   (PyCFunction)InterpObjProxy_dir,      METH_NOARGS,
+     "Returns attributes of InterpObjProxy, which include the attributes of the "
      "wrapped object."},
-    
+
     { NULL }
 };
 
 /**
  * Instance getters and setters.
  */
-static PyGetSetDef DelegateProxy_accessors[] = {
-    { "is_async",    (getter)DelegateProxy_is_async, (setter)NULL,
-      "If async is True, the methods of the proxy will return AsyncResult "
-      "objects. If False, the methods return the same objects as the "
-      "internal methods.", NULL },
-      
-    { "obj",         (getter)DelegateProxy_wrapped,  (setter)NULL, 
+static PyGetSetDef InterpObjProxy_accessors[] = {
+    { "obj",         (getter)InterpObjProxy_wrapped,  (setter)NULL,
       "Returns the proxy's wrapped object.", NULL },
-      
+
     { NULL }
 };
 
 /**
  * Type declaration and instance.
  */
-static PyTypeObject DelegateProxyType = {
+static PyTypeObject InterpObjProxyType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name        = "hexchat.DelegateProxy",
-    .tp_doc         = "Wraps an object and provides Delegates for its methods.",
-    .tp_basicsize   = sizeof(DelegateProxyObj),
+    .tp_name        = "hexchat.InterpObjProxy",
+    .tp_doc         = "Wraps an object from a specific interp and proxies "
+                      "attribute accesses to it.",
+    .tp_basicsize   = sizeof(InterpObjProxyObj),
     .tp_itemsize    = 0,
     .tp_flags       = Py_TPFLAGS_DEFAULT,
     .tp_new         = PyType_GenericNew,
-    .tp_init        = (initproc)DelegateProxy_init,
-    .tp_dealloc     = (destructor)DelegateProxy_dealloc,
-    .tp_members     = DelegateProxy_members,
-    .tp_methods     = DelegateProxy_methods,
-    .tp_getset      = DelegateProxy_accessors,
-    .tp_richcompare = (richcmpfunc)DelegateProxy_cmp,
-    .tp_repr        = (reprfunc)DelegateProxy_repr,
-    .tp_hash        = (hashfunc)DelegateProxy_hash,
-    .tp_getattro    = (getattrofunc)DelegateProxy_getattro,  
+    .tp_init        = (initproc)InterpObjProxy_init,
+    .tp_dealloc     = (destructor)InterpObjProxy_dealloc,
+    .tp_members     = InterpObjProxy_members,
+    .tp_methods     = InterpObjProxy_methods,
+    .tp_getset      = InterpObjProxy_accessors,
+    .tp_richcompare = (richcmpfunc)InterpObjProxy_cmp,
+    .tp_repr        = (reprfunc)InterpObjProxy_repr,
+    .tp_hash        = (hashfunc)InterpObjProxy_hash,
+    .tp_getattro    = (getattrofunc)InterpObjProxy_getattro,
 };
 
 /**
  * Convenience pointer to the type.
  */
-PyTypeObject *DelegateProxyTypePtr = &DelegateProxyType;
+PyTypeObject *InterpObjProxyTypePtr = &InterpObjProxyType;
 
 /**
  * Constructor.
  * @param self      - Object instance.
  * @param args      - From python there are two positional arguments:
  *                    the wrapped object and 'is_async'. If 'is_async' is True
- *                    the DelegateProxy will provide asynchronous delegates to
+ *                    the InterpObjProxy will provide asynchronous delegates to
  *                    the wrapped objects methods. If False, the delegates
  *                    are synchronous.
  * @param kwargs    - not used.
  * @returns - 0 on success, or -1 on failure with error state set.
  */
 int
-DelegateProxy_init(DelegateProxyObj *self, PyObject *args, PyObject *kwargs)
+InterpObjProxy_init(InterpObjProxyObj *self, PyObject *args, PyObject *kwargs)
 {
-    PyObject *pywrapped;
-    int      is_async = false;
+    PyObject *pyinterp;
+    PyObject *pyobj;
 
-    static char *keywords[] = { "obj", "is_async", NULL };
+    static char *keywords[] = { "interp", "obj", NULL };
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|p:__init__", keywords,
-                                     &pywrapped, &is_async)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO:__init__", keywords,
+                                     &pyinterp, &pyobj)) {
         return -1;
     }
-    self->obj         = pywrapped;
-    self->is_async    = is_async;
+    if (!PyCapsule_CheckExact(pyinterp) ||
+            strcmp(PyCapsule_GetName(pyinterp), "interp")) {
+
+        PyErr_SetString(PyExc_TypeError,
+                        "InterpObjProxy constructor requires an interp capsule "
+                        "for 'interp' parameter.");
+        return -1;
+    }
+    self->tscap       = pyinterp;
+    self->threadstate = PyCapsule_GetPointer(pyinterp, "interp");
+    self->obj         = pyobj;
     self->cache       = PyDict_New();
 
-    Py_INCREF(pywrapped);
+    Py_INCREF(pyinterp);
+    Py_INCREF(pyobj);
 
     return 0;
 }
 
 void
-DelegateProxy_dealloc(DelegateProxyObj *self)
+InterpObjProxy_dealloc(InterpObjProxyObj *self)
 {
     Py_XDECREF(self->cache);
     Py_XDECREF(self->obj);
+    Py_XDECREF(self->tscap);
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 /**
- * Returns attributes of the wrapped object. If the attribute is callable, it 
- * is wrapped in a Delegate object which will execute it on the main thread 
+ * Returns attributes of the wrapped object. If the attribute is callable, it
+ * is wrapped in a Delegate object which will execute it on the main thread
  * when invoked. A cache of Delegates is maintained so subsequent accesses of
  * a callable attribute returns the same Delegate.
  * @param self      - instance.
@@ -167,7 +174,7 @@ DelegateProxy_dealloc(DelegateProxyObj *self)
  *            failure with error state set.
  */
 PyObject *
-DelegateProxy_getattro(DelegateProxyObj *self, PyObject *pyname)
+InterpObjProxy_getattro(InterpObjProxyObj *self, PyObject *pyname)
 {
     PyObject *pyretval;
     PyObject *pyattr;
@@ -176,10 +183,10 @@ DelegateProxy_getattro(DelegateProxyObj *self, PyObject *pyname)
     if ((pyretval = PyObject_GenericGetAttr((PyObject *)self, pyname))) {
         return pyretval;
     }
-    // An AttributeError is expected if the attribute isn't one of the 
+    // An AttributeError is expected if the attribute isn't one of the
     // generics.
 
-    // If the error is an AttributeError, dismiss it; otherwise, return NULL 
+    // If the error is an AttributeError, dismiss it; otherwise, return NULL
     // to propagate the error.
     if (!PyErr_ExceptionMatches(PyExc_AttributeError)) {
         return NULL;
@@ -193,40 +200,30 @@ DelegateProxy_getattro(DelegateProxyObj *self, PyObject *pyname)
     if (!pyattr) {
         return NULL;
     }
-    
+
+    // TODO - Need to determine which objects to wrap in a proxy before
+    //        returning.
+
     if (PyDict_Contains(self->cache, pyattr)) {
         pyretval = PyDict_GetItem(self->cache, pyattr); // BR.
         Py_INCREF(pyretval);
         Py_DECREF(pyattr);
     }
     else if (PyCallable_Check(pyattr)) {
-        pyretval = PyObject_CallFunction((PyObject *)DelegateTypePtr,
-                                         "Oi", pyattr, self->is_async);
+        pyretval = PyObject_CallFunction((PyObject *)InterpCallTypePtr,
+                                         "OO", self->tscap, pyattr);
         PyDict_SetItem(self->cache, pyattr, pyretval);
         Py_DECREF(pyattr);
     }
     return pyretval;
 }
 
-/**
- * Accessor for 'is_async'.
- */
-PyObject *
-DelegateProxy_is_async(DelegateProxyObj *self, void *closure)
-{
-    if (self->is_async) {
-        Py_RETURN_TRUE;
-    }
-    else {
-        Py_RETURN_FALSE;
-    }
-}
 
 /**
  * 'obj' getter for the wrapped object.
  */
 PyObject *
-DelegateProxy_wrapped(DelegateProxyObj *self, void *closure)
+InterpObjProxy_wrapped(InterpObjProxyObj *self, void *closure)
 {
     Py_INCREF(self->obj);
     return self->obj;
@@ -237,7 +234,7 @@ DelegateProxy_wrapped(DelegateProxyObj *self, void *closure)
  * is invoked on the ListIter class or an object.
  */
 PyObject *
-DelegateProxy_dir(DelegateProxyObj *self)
+InterpObjProxy_dir(InterpObjProxyObj *self)
 {
     PyObject    *pydir_list1;
     PyObject    *pydir_list2;
@@ -249,7 +246,7 @@ DelegateProxy_dir(DelegateProxyObj *self)
     pydir_list3 = PySequence_InPlaceConcat(pydir_list1, pydir_list2);
 
     pyset = PySet_New(pydir_list3);
-    
+
     Py_XDECREF(pydir_list1);
     Py_XDECREF(pydir_list2);
     Py_XDECREF(pydir_list3);
@@ -264,37 +261,33 @@ DelegateProxy_dir(DelegateProxyObj *self)
 }
 
 /**
- * Returns an intuitive representation of the DelegateProxy instance.
+ * Returns an intuitive representation of the InterpObjProxy instance.
  */
 PyObject *
-DelegateProxy_repr(DelegateProxyObj *self, PyObject *Py_UNUSED(args))
+InterpObjProxy_repr(InterpObjProxyObj *self, PyObject *Py_UNUSED(args))
 {
     PyObject *pyrepr;
     PyObject *pyobjrepr;
-    PyObject *pyasync;
-    
-    pyobjrepr = PyObject_Repr(self->obj);
-    pyasync   = (self->is_async) ? Py_True : Py_False;
 
-    pyrepr = PyUnicode_FromFormat("DelegateProxy(%U, is_async=%R)", 
-                                  pyobjrepr, 
-                                  pyasync);
-    
+    pyobjrepr = PyObject_Repr(self->obj);
+
+    pyrepr = PyUnicode_FromFormat("InterpObjProxy(%U)", pyobjrepr);
+
     Py_DECREF(pyobjrepr);
-    
+
     return pyrepr;
 }
 
 /**
- * Implements the comparison function. DelegateProxy instances are equal to
- * other DelegateProxy instances that wrap objects that are equal.
+ * Implements the comparison function. InterpObjProxy instances are equal to
+ * other InterpObjProxy instances that wrap objects that are equal.
  */
 PyObject *
-DelegateProxy_cmp(DelegateProxyObj *a, PyObject *b, int op)
+InterpObjProxy_cmp(InterpObjProxyObj *a, PyObject *b, int op)
 {
-    DelegateProxyObj *delb = (DelegateProxyObj *)b;
+    InterpObjProxyObj *delb = (InterpObjProxyObj *)b;
 
-    if (Py_TYPE(b) == DelegateProxyTypePtr) {
+    if (Py_TYPE(b) == InterpObjProxyTypePtr) {
 
         return PyObject_RichCompare(a->obj, delb->obj, op);
     }
@@ -306,13 +299,13 @@ DelegateProxy_cmp(DelegateProxyObj *a, PyObject *b, int op)
  * the same value.
  */
 Py_hash_t
-DelegateProxy_hash(DelegateProxyObj *self)
+InterpObjProxy_hash(InterpObjProxyObj *self)
 {
     Py_hash_t hash1, hash2;
-    
+
     hash1 = PyObject_Hash(self->obj);
     hash2 = PyObject_Hash((PyObject *)Py_TYPE(self));
-    
+
     return hash1 + hash2;
 }
 
