@@ -202,7 +202,7 @@ InterpObjProxy_getattro(InterpObjProxyObj *self, PyObject *pyname)
     }
 
     // TODO - Need to determine which objects to wrap in a proxy before
-    //        returning.
+    //        returning. Don't want to wrap basic types like int, str, etc.
 
     if (PyDict_Contains(self->cache, pyattr)) {
         pyretval = PyDict_GetItem(self->cache, pyattr); // BR.
@@ -211,6 +211,12 @@ InterpObjProxy_getattro(InterpObjProxyObj *self, PyObject *pyname)
     }
     else if (PyCallable_Check(pyattr)) {
         pyretval = PyObject_CallFunction((PyObject *)InterpCallTypePtr,
+                                         "OO", self->tscap, pyattr);
+        PyDict_SetItem(self->cache, pyattr, pyretval);
+        Py_DECREF(pyattr);
+    }
+    else {
+        pyretval = PyObject_CallFunction((PyObject *)InterpObjProxyTypePtr,
                                          "OO", self->tscap, pyattr);
         PyDict_SetItem(self->cache, pyattr, pyretval);
         Py_DECREF(pyattr);

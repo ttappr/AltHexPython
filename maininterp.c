@@ -43,6 +43,7 @@
 typedef struct {
     PyObject_HEAD
     PyObject      *tscap;
+    PyObject      *cache;
     PyThreadState *threadstate;
 } MainInterpObj;
 
@@ -57,13 +58,16 @@ static void     MainInterp_dealloc   (MainInterpObj *);
 static PyObject *MainInterp_import   (MainInterpObj *, PyObject *);
 static PyObject *MainInterp_exec     (MainInterpObj *, PyObject *);
 static PyObject *MainInterp_getattro (MainInterpObj *, PyObject *);
+static PyObject *MainInterp_dir      (MainInterpObj *);
 
 static PyMethodDef MainInterp_methods[] = {
-        {"loadmodule",   (PyCFunction)MainInterp_import, METH_VARARGS,
-         "Imports a module into the main interpreter environment."},
-        {"exec",         (PyCFunction)MainInterp_exec,   METH_VARARGS,
-         "Executes string in main interpreter environment."},
-        {NULL}
+    {"__dir__",      (PyCFunction)MainInterp_dir, METH_NOARGS,
+     "Returns result of executing dir() in the main interpreter environment."},
+    {"loadmodule",   (PyCFunction)MainInterp_import, METH_VARARGS,
+     "Imports a module into the main interpreter environment."},
+    {"exec",         (PyCFunction)MainInterp_exec,   METH_VARARGS,
+     "Executes string in main interpreter environment."},
+    {NULL}
 };
 
 /**
@@ -100,8 +104,11 @@ MainInterp_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         main_interp = (MainInterpObj *)type->tp_alloc(type, 0);
         if (main_interp) {
             main_interp->threadstate = py_g_main_threadstate;
+            main_interp->cache       = PyDict_New();
             main_interp->tscap       = PyCapsule_New(py_g_main_threadstate,
                                                      "interp", NULL);
+            // Add a ref count for the static pointer.
+            Py_INCREF(main_interp);
         }
         else {
             return NULL;
@@ -135,7 +142,7 @@ MainInterp_dealloc(MainInterpObj *self)
 }
 
 PyObject *
-MainInterp_import   (MainInterpObj *self, PyObject *args)
+MainInterp_import(MainInterpObj *self, PyObject *args)
 {
     PyObject     *pyname;
     PyObject     *pymod;
@@ -169,33 +176,39 @@ MainInterp_exec(MainInterpObj *self, PyObject *args)
 {
     PyObject     *pyscript;
     PyObject     *pyret;
+    PyObject     *pymain;
+    PyObject     *pydict;
     PyObject     *pyexc_type, *pyexc, *pytraceback;
     SwitchTSInfo tsinfo;
-    int          retval;
 
     if (!PyArg_ParseTuple(args, "U", &pyscript)) {
         return NULL;
     }
-
+    // Switch to main interpreter.
     tsinfo = switch_threadstate(self->threadstate);
 
-    retval = PyRun_SimpleString(PyUnicode_AsUTF8(pyscript));
+    pymain = PyImport_AddModule("__main__"); // BR.
+    pydict = PyModule_GetDict(pymain);       // BR.
 
-    if (retval) {
+    // Run the script.
+    pyret  = PyRun_String(PyUnicode_AsUTF8(pyscript), Py_single_input,
+                          pydict, pydict);
+
+    if (!pyret) {
+        // If error, capture error state.
         PyErr_Fetch(&pyexc_type, &pyexc, &pytraceback);
         PyErr_NormalizeException(&pyexc_type, &pyexc, &pytraceback);
     }
 
+    // Switch back to caller.
     switch_threadstate_back(tsinfo);
 
-    if (retval) {
+    if (!pyret) {
+        // If error, restore error state in caller.
         PyErr_Restore(pyexc_type, pyexc, pytraceback);
-        pyret = NULL;
     }
-    else {
-        pyret = Py_None;
-        Py_INCREF(pyret);
-    }
+
+    // TODO - Wrap return value in transparent proxy if it's not a basic type.
 
     return pyret;
 }
@@ -206,6 +219,7 @@ MainInterp_exec(MainInterpObj *self, PyObject *args)
 PyObject *
 MainInterp_getattro(MainInterpObj *self, PyObject *pyname)
 {
+    PyObject     *pyattr;
     PyObject     *pyret;
     PyObject     *pydict;
     PyObject     *pymain;
@@ -236,7 +250,8 @@ MainInterp_getattro(MainInterpObj *self, PyObject *pyname)
     pymain = PyImport_AddModule("__main__");
     pydict = PyModule_GetDict(pymain);
 
-    pyret  = PyDict_GetItemWithError(pydict, pyname);
+    pyattr  = PyDict_GetItemWithError(pydict, pyname); // BR.
+    pyret   = pyattr;
 
     if (PyErr_Occurred()) {
         // If error, capture exception data, clearing it in the target interp.
@@ -261,11 +276,67 @@ MainInterp_getattro(MainInterpObj *self, PyObject *pyname)
             PyErr_Restore(pyexc_type, pyexc, pytraceback);
         }
     }
+    else if (PyDict_Contains(self->cache, pyattr)) {
+        pyret = PyDict_GetItem(self->cache, pyattr); // BR.
+        Py_INCREF(pyret);
+        Py_DECREF(pyattr);
+    }
+    else if (PyCallable_Check(pyattr)) {
+        pyret = PyObject_CallFunction((PyObject *)InterpCallTypePtr,
+                                      "OO", self->tscap, pyattr);
+        PyDict_SetItem(self->cache, pyattr, pyret);
+        Py_DECREF(pyattr);
+    }
+    else {
+        pyret = PyObject_CallFunction((PyObject *)InterpObjProxyTypePtr,
+                                      "OO", self->tscap, pyattr);
+        PyDict_SetItem(self->cache, pyattr, pyret);
+        Py_DECREF(pyattr);
+    }
 
     return pyret;
 }
 
+PyObject *
+MainInterp_dir(MainInterpObj *self)
+{
+    PyObject     *pydir_list1;
+    PyObject     *pydir_list2;
+    PyObject     *pydir_list3;
+    PyObject     *pyset;
+    PyObject     *pymain, *pydict;
+    PyObject     *pyexc_type, *pyexc, *pytraceback;
+    SwitchTSInfo tsinfo;
 
+    tsinfo = switch_threadstate(self->threadstate);
+
+    pymain = PyImport_AddModule("__main__");
+    pydict = PyModule_GetDict(pymain);
+
+    pydir_list1 = PyObject_Dir((PyObject *)Py_TYPE(self));
+    pydir_list2 = PyDict_Keys(pydict);
+    pydir_list3 = PySequence_InPlaceConcat(pydir_list1, pydir_list2);
+
+    pyset = PySet_New(pydir_list3);
+
+    Py_XDECREF(pydir_list1);
+    Py_XDECREF(pydir_list2);
+    Py_XDECREF(pydir_list3);
+
+    if (!pyset) {
+        // This should not happen.
+        PyErr_Fetch(&pyexc_type, &pyexc, &pytraceback);
+        PyErr_NormalizeException(&pyexc_type, &pyexc, &pytraceback);
+    }
+
+    switch_threadstate_back(tsinfo);
+
+    if (!pyset) {
+        PyErr_Restore(pyexc_type, pyexc, pytraceback);
+    }
+
+    return pyset;
+}
 
 
 
