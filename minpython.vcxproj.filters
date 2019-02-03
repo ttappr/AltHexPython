@@ -59,6 +59,15 @@
     <ClCompile Include="delegateproxy.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="interpcall.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="interpobjproxy.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="maininterp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="minpython.h">

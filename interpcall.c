@@ -54,6 +54,7 @@ static PyTypeObject InterpCallType = {
     .tp_basicsize   = sizeof(InterpCallObj),
     .tp_itemsize    = 0,
     .tp_flags       = Py_TPFLAGS_DEFAULT,
+	.tp_new         = PyType_GenericNew,
     .tp_init        = (initproc)InterpCall_init,
     .tp_dealloc     = (destructor)InterpCall_dealloc,
     .tp_call        = (ternaryfunc)InterpCall_call,
@@ -113,13 +114,13 @@ PyObject *
 InterpCall_call(InterpCallObj *self, PyObject *args, PyObject *kwargs)
 {
     PyObject     *pyret;
-    PyObject     *pyexc_type;
-    PyObject     *pyexc;
-    PyObject     *pytraceback;
+    PyObject     *pyexc_type	= NULL;
+    PyObject     *pyexc			= NULL;
+    PyObject     *pytraceback	= NULL;
     SwitchTSInfo tsinfo;
 
     // Switch to target interpreter.
-    switch_threadstate(self->threadstate);
+    tsinfo = switch_threadstate(self->threadstate);
 
     // Invoke call.
     pyret = PyObject_Call(self->callable, args, kwargs);

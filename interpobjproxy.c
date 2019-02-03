@@ -212,6 +212,9 @@ InterpObjProxy_getattro(InterpObjProxyObj *self, PyObject *pyname)
     else if (PyCallable_Check(pyattr)) {
         pyretval = PyObject_CallFunction((PyObject *)InterpCallTypePtr,
                                          "OO", self->tscap, pyattr);
+		if (!pyretval) {
+			return NULL;
+		}
         PyDict_SetItem(self->cache, pyattr, pyretval);
         Py_DECREF(pyattr);
     }

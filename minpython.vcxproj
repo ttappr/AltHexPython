@@ -169,7 +169,10 @@
     <ClCompile Include="delegate.c" />
     <ClCompile Include="delegateproxy.c" />
     <ClCompile Include="eventattrs.c" />
+    <ClCompile Include="interpcall.c" />
+    <ClCompile Include="interpobjproxy.c" />
     <ClCompile Include="listiter.c" />
+    <ClCompile Include="maininterp.c" />
     <ClCompile Include="minpython.c" />
     <ClCompile Include="outstream.c" />
     <ClCompile Include="plugin.c" />

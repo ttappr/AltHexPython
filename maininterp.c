@@ -146,7 +146,9 @@ MainInterp_import(MainInterpObj *self, PyObject *args)
 {
     PyObject     *pyname;
     PyObject     *pymod;
-    PyObject     *pyexc_type, *pyexc, *pytraceback;
+    PyObject     *pyexc_type	= NULL;
+	PyObject	 *pyexc			= NULL;
+	PyObject	 *pytraceback	= NULL;
     SwitchTSInfo tsinfo;
 
     if (!PyArg_ParseTuple(args, "U", &pyname)) {
@@ -178,7 +180,9 @@ MainInterp_exec(MainInterpObj *self, PyObject *args)
     PyObject     *pyret;
     PyObject     *pymain;
     PyObject     *pydict;
-    PyObject     *pyexc_type, *pyexc, *pytraceback;
+    PyObject     *pyexc_type	= NULL;
+	PyObject	 *pyexc			= NULL;
+	PyObject	 *pytraceback	= NULL;
     SwitchTSInfo tsinfo;
 
     if (!PyArg_ParseTuple(args, "U", &pyscript)) {
@@ -223,9 +227,9 @@ MainInterp_getattro(MainInterpObj *self, PyObject *pyname)
     PyObject     *pyret;
     PyObject     *pydict;
     PyObject     *pymain;
-    PyObject     *pyexc_type;
-    PyObject     *pyexc;
-    PyObject     *pytraceback;
+    PyObject     *pyexc_type	= NULL;
+	PyObject	 *pyexc			= NULL;
+	PyObject	 *pytraceback	= NULL;
     int          set_name_error = 0;
     SwitchTSInfo tsinfo;
 
@@ -305,7 +309,9 @@ MainInterp_dir(MainInterpObj *self)
     PyObject     *pydir_list3;
     PyObject     *pyset;
     PyObject     *pymain, *pydict;
-    PyObject     *pyexc_type, *pyexc, *pytraceback;
+    PyObject     *pyexc_type	= NULL;
+	PyObject	 *pyexc			= NULL;
+	PyObject	 *pytraceback	= NULL;
     SwitchTSInfo tsinfo;
 
     tsinfo = switch_threadstate(self->threadstate);

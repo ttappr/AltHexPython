@@ -270,6 +270,9 @@ PyInit_hexchat(void)
         "ListIter",         ListIterTypePtr,
         "MainInterp",       MainInterpTypePtr,
         "OutStream",        OutStreamTypePtr,
+		"MainInterp",		MainInterpTypePtr,
+		"InterpCall",		InterpCallTypePtr,
+		"InterpObjProxy",   InterpObjProxyTypePtr,
         NULL, NULL
     };
     
