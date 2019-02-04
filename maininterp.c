@@ -287,13 +287,13 @@ MainInterp_getattro(MainInterpObj *self, PyObject *pyname)
     }
     else if (PyCallable_Check(pyattr)) {
         pyret = PyObject_CallFunction((PyObject *)InterpCallTypePtr,
-                                      "OO", self->tscap, pyattr);
+                                      "OO", pyattr, self->tscap);
         PyDict_SetItem(self->cache, pyattr, pyret);
         Py_DECREF(pyattr);
     }
     else {
         pyret = PyObject_CallFunction((PyObject *)InterpObjProxyTypePtr,
-                                      "OO", self->tscap, pyattr);
+                                      "OO", pyattr, self->tscap);
         PyDict_SetItem(self->cache, pyattr, pyret);
         Py_DECREF(pyattr);
     }

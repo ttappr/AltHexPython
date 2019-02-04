@@ -59,6 +59,7 @@ static int      Delegate_init           (DelegateObj *, PyObject *, PyObject *);
 static void     Delegate_dealloc        (DelegateObj *);
 static PyObject *Delegate_call          (DelegateObj *, PyObject *, PyObject *);
 static PyObject *Delegate_get_is_async  (DelegateObj *, void *);
+static PyObject *Delegate_repr          (DelegateObj *, PyObject *);
 
 static PyObject *delegate_get_queue_constr  (DelegateObj *);
 static int      delegate_timer_callback     (void *);
@@ -94,6 +95,7 @@ static PyTypeObject DelegateType = {
     .tp_dealloc     = (destructor)Delegate_dealloc,
     //.tp_members     = Delegate_members,
     .tp_call        = (ternaryfunc)Delegate_call,
+    .tp_repr        = (reprfunc)Delegate_repr,
     //.tp_methods     = Delegate_methods,
     .tp_getset      = Delegate_accessors,
 };
@@ -392,7 +394,20 @@ Delegate_get_is_async(DelegateObj *self, void *closure)
     Py_RETURN_FALSE;
 }
 
+PyObject *
+Delegate_repr(DelegateObj *self, PyObject *Py_UNUSED(args))
+{
+    PyObject *pyrepr;
+    PyObject *pyobjrepr;
 
+    pyobjrepr = PyObject_Repr(self->callable);
+
+    pyrepr = PyUnicode_FromFormat("Delegate(%U)", pyobjrepr);
+
+    Py_DECREF(pyobjrepr);
+
+    return pyrepr;
+}
 
 
 

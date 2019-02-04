@@ -23,7 +23,7 @@
  ******************************************************************************/
 
 /**
- *
+ * echo 0 > /proc/sys/kernel/yama/ptrace_scope
  */
 
 #include "minpython.h"
@@ -42,6 +42,7 @@ typedef struct {
 static int      InterpCall_init      (InterpCallObj *, PyObject *, PyObject *);
 static void     InterpCall_dealloc   (InterpCallObj *);
 static PyObject *InterpCall_call     (InterpCallObj *, PyObject *, PyObject *);
+static PyObject *InterpCall_repr     (InterpCallObj *, PyObject *);
 
 
 /**
@@ -58,6 +59,7 @@ static PyTypeObject InterpCallType = {
     .tp_init        = (initproc)InterpCall_init,
     .tp_dealloc     = (destructor)InterpCall_dealloc,
     .tp_call        = (ternaryfunc)InterpCall_call,
+    .tp_repr        = (reprfunc)InterpCall_repr,
 };
 
 /**
@@ -69,12 +71,12 @@ PyTypeObject *InterpCallTypePtr = &InterpCallType;
 int
 InterpCall_init(InterpCallObj *self, PyObject *args, PyObject *kwargs)
 {
-    PyObject    *pyinterp;
+    PyObject    *pyinterp   = NULL;
     PyObject    *pyfunc;
-    static char *keywords[] = { "interp", "func", NULL };
+    static char *keywords[] = { "func", "interp", NULL };
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO", keywords,
-                                     &pyinterp, &pyfunc)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O:__init__", keywords,
+                                     &pyfunc, &pyinterp)) {
         return -1;
     }
     if (!PyCallable_Check(pyfunc)) {
@@ -83,19 +85,24 @@ InterpCall_init(InterpCallObj *self, PyObject *args, PyObject *kwargs)
                         "for 'func' parameter.");
         return -1;
     }
-    if (!PyCapsule_CheckExact(pyinterp) ||
-            strcmp(PyCapsule_GetName(pyinterp), "interp")) {
+    if (pyinterp) {
+        if (!PyCapsule_CheckExact(pyinterp) ||
+                strcmp(PyCapsule_GetName(pyinterp), "interp")) {
 
-        PyErr_SetString(PyExc_TypeError,
-                        "InterpCall constructor requires an interp capsule "
-                        "for 'interp' parameter.");
-        return -1;
+            PyErr_SetString(PyExc_TypeError,
+                            "InterpCall constructor requires an interp "
+                            "capsule for 'interp' parameter.");
+            return -1;
+        }
+        Py_INCREF(pyinterp);
+    }
+    else {
+        pyinterp = PyCapsule_New(PyThreadState_Get(), "interp", NULL);
     }
     self->tscap       = pyinterp;
     self->threadstate = PyCapsule_GetPointer(pyinterp, "interp");
     self->callable    = pyfunc;
 
-    Py_INCREF(pyinterp);
     Py_INCREF(pyfunc);
 
     return 0;
@@ -114,6 +121,7 @@ PyObject *
 InterpCall_call(InterpCallObj *self, PyObject *args, PyObject *kwargs)
 {
     PyObject     *pyret;
+    PyObject     *pytmp;
     PyObject     *pyexc_type	= NULL;
     PyObject     *pyexc			= NULL;
     PyObject     *pytraceback	= NULL;
@@ -139,11 +147,39 @@ InterpCall_call(InterpCallObj *self, PyObject *args, PyObject *kwargs)
         // If error, restore the exception in the calling interp.
         PyErr_Restore(pyexc_type, pyexc, pytraceback);
     }
+    else if (pyret == Py_None) {
+        // Do Nothing.
+    }
+    else if (PyCallable_Check(pyret)) {
+        pytmp = PyObject_CallFunction((PyObject *)InterpCallTypePtr,
+                                      "OO", pyret, self->tscap);
+        Py_DECREF(pyret);
+        pyret = pytmp;
+    }
+    else {
+        pytmp = PyObject_CallFunction((PyObject *)InterpObjProxyTypePtr,
+                                      "OO", pyret, self->tscap);
+        Py_DECREF(pyret);
+        pyret = pytmp;
+    }
 
     return pyret;
 }
 
+PyObject *
+InterpCall_repr(InterpCallObj *self, PyObject *Py_UNUSED(args))
+{
+    PyObject *pyrepr;
+    PyObject *pyobjrepr;
 
+    pyobjrepr = PyObject_Repr(self->callable);
+
+    pyrepr = PyUnicode_FromFormat("InterpCall(%U)", pyobjrepr);
+
+    Py_DECREF(pyobjrepr);
+
+    return pyrepr;
+}
 
 
 

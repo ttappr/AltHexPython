@@ -126,22 +126,27 @@ PyTypeObject *InterpObjProxyTypePtr = &InterpObjProxyType;
 int
 InterpObjProxy_init(InterpObjProxyObj *self, PyObject *args, PyObject *kwargs)
 {
-    PyObject *pyinterp;
+    PyObject *pyinterp = NULL;
     PyObject *pyobj;
 
-    static char *keywords[] = { "interp", "obj", NULL };
+    static char *keywords[] = { "obj", "interp", NULL };
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO:__init__", keywords,
-                                     &pyinterp, &pyobj)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O:__init__", keywords,
+                                     &pyobj, &pyinterp)) {
         return -1;
     }
-    if (!PyCapsule_CheckExact(pyinterp) ||
-            strcmp(PyCapsule_GetName(pyinterp), "interp")) {
+    if (pyinterp) {
+        if (!PyCapsule_CheckExact(pyinterp) ||
+                strcmp(PyCapsule_GetName(pyinterp), "interp")) {
 
-        PyErr_SetString(PyExc_TypeError,
-                        "InterpObjProxy constructor requires an interp capsule "
-                        "for 'interp' parameter.");
-        return -1;
+            PyErr_SetString(PyExc_TypeError,
+                            "InterpObjProxy constructor requires an interp "
+                            "capsule for 'interp' parameter.");
+            return -1;
+        }
+    }
+    else {
+        pyinterp = PyCapsule_New(PyThreadState_Get(), "interp", NULL);
     }
     self->tscap       = pyinterp;
     self->threadstate = PyCapsule_GetPointer(pyinterp, "interp");
@@ -176,8 +181,14 @@ InterpObjProxy_dealloc(InterpObjProxyObj *self)
 PyObject *
 InterpObjProxy_getattro(InterpObjProxyObj *self, PyObject *pyname)
 {
-    PyObject *pyretval;
-    PyObject *pyattr;
+    PyObject	 *pyretval;
+    PyObject	 *pyattr;
+    PyObject     *pyexc_type    = NULL;
+    PyObject     *pyexc         = NULL;
+    PyObject     *pytraceback   = NULL;
+    Py_hash_t    hash;
+    PyObject     *pyhashobj;
+	SwitchTSInfo tsinfo;
 
     // See if the requested attribute is defined elsewhere first.
     if ((pyretval = PyObject_GenericGetAttr((PyObject *)self, pyname))) {
@@ -193,37 +204,63 @@ InterpObjProxy_getattro(InterpObjProxyObj *self, PyObject *pyname)
     }
     PyErr_Clear();
 
+	tsinfo = switch_threadstate(self->threadstate);
+
     // Get the attribute from the wrapped object.
     pyattr   = PyObject_GetAttr(self->obj, pyname); // NR.
-    pyretval = pyattr;
+	
+	if (PyErr_Occurred()) {
+        // If error, capture exception data, clearing it in the target interp.
+        PyErr_Fetch(&pyexc_type, &pyexc, &pytraceback);
+        PyErr_NormalizeException(&pyexc_type, &pyexc, &pytraceback);
+        if (pyattr) {
+            Py_DECREF(pyattr);
+            pyattr = NULL;
+        }
+    }
+	else {
+	    hash = PyObject_Hash(pyattr);
+	    if (PyErr_Occurred()) {
+	        PyErr_Clear();
+	    }
+	}
 
-    if (!pyattr) {
+    switch_threadstate_back(tsinfo);
+	
+    if(!pyattr) {
+        // If error, restore the exception in the calling interp.
+        PyErr_Restore(pyexc_type, pyexc, pytraceback);
         return NULL;
+    }
+
+    if (hash == -1) {
+        pyhashobj = PyLong_FromVoidPtr(pyattr);
+    }
+    else {
+        pyhashobj = pyattr;
+        Py_INCREF(pyhashobj);
     }
 
     // TODO - Need to determine which objects to wrap in a proxy before
     //        returning. Don't want to wrap basic types like int, str, etc.
 
-    if (PyDict_Contains(self->cache, pyattr)) {
-        pyretval = PyDict_GetItem(self->cache, pyattr); // BR.
+    if (PyDict_Contains(self->cache, pyhashobj)) {
+        pyretval = PyDict_GetItem(self->cache, pyhashobj); // BR.
         Py_INCREF(pyretval);
-        Py_DECREF(pyattr);
     }
     else if (PyCallable_Check(pyattr)) {
         pyretval = PyObject_CallFunction((PyObject *)InterpCallTypePtr,
-                                         "OO", self->tscap, pyattr);
-		if (!pyretval) {
-			return NULL;
-		}
-        PyDict_SetItem(self->cache, pyattr, pyretval);
-        Py_DECREF(pyattr);
+                                         "OO", pyattr, self->tscap);
+        PyDict_SetItem(self->cache, pyhashobj, pyretval);
     }
     else {
         pyretval = PyObject_CallFunction((PyObject *)InterpObjProxyTypePtr,
-                                         "OO", self->tscap, pyattr);
-        PyDict_SetItem(self->cache, pyattr, pyretval);
-        Py_DECREF(pyattr);
+                                         "OO", pyattr, self->tscap);
+        PyDict_SetItem(self->cache, pyhashobj, pyretval);
     }
+    Py_DECREF(pyattr);
+    Py_DECREF(pyhashobj);
+
     return pyretval;
 }
 
