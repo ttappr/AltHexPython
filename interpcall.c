@@ -125,13 +125,64 @@ InterpCall_call(InterpCallObj *self, PyObject *args, PyObject *kwargs)
     PyObject     *pyexc_type	= NULL;
     PyObject     *pyexc			= NULL;
     PyObject     *pytraceback	= NULL;
+    PyObject     *pytup;
+    PyObject     *pydict        = NULL;
+    PyObject     *pykey;
+    PyObject     *pyobj;
+    Py_ssize_t   i, j, len;
     SwitchTSInfo tsinfo;
+
+    // Wrap callables and non basic types in a proxy that executes in the
+    // caller's context.
+    len    = PyObject_Length(args);
+    pytup  = PyTuple_New(len);
+
+    for (i = 0; i < len; i++) {
+        pyobj = PyTuple_GetItem(args, i); // BR.
+        if (PyObject_IsInstance(pyobj, (PyObject *)InterpCallTypePtr)     ||
+            PyObject_IsInstance(pyobj, (PyObject *)InterpObjProxyTypePtr) ||
+            interp_is_primitive(pyobj)) {
+            Py_INCREF(pyobj);
+        }
+        else if (PyCallable_Check(pyobj)) {
+            pyobj = PyObject_CallFunction((PyObject *)InterpCallTypePtr,
+                                          "O", pyobj);
+        }
+        else {
+            pyobj = PyObject_CallFunction((PyObject *)InterpObjProxyTypePtr,
+                                          "O", pyobj);
+        }
+        PyTuple_SetItem(pytup, i, pyobj);
+    }
+    if (kwargs) {
+        len    = PyDict_Size(kwargs);
+        pydict = PyDict_New();
+        for (i = 0; i < len; i++) {
+            PyDict_Next(kwargs, &j, &pykey, &pyobj);
+
+            if (PyObject_IsInstance(pyobj, (PyObject *)InterpCallTypePtr)     ||
+                PyObject_IsInstance(pyobj, (PyObject *)InterpObjProxyTypePtr) ||
+                interp_is_primitive(pyobj)) {
+                Py_INCREF(pyobj);
+            }
+            else if (PyCallable_Check(pyobj)) {
+                pyobj = PyObject_CallFunction((PyObject *)InterpCallTypePtr,
+                                              "O", pyobj);
+            }
+            else {
+                pyobj = PyObject_CallFunction((PyObject *)InterpObjProxyTypePtr,
+                                              "O", pyobj);
+            }
+            PyDict_SetItem(pydict, pykey, pyobj);
+            Py_DECREF(pyobj);
+        }
+    }
 
     // Switch to target interpreter.
     tsinfo = switch_threadstate(self->threadstate);
 
     // Invoke call.
-    pyret = PyObject_Call(self->callable, args, kwargs);
+    pyret = PyObject_Call(self->callable, pytup, pydict);
 
     if (!pyret) {
         // If error, capture exception data, clearing it in the target interp.
@@ -142,6 +193,9 @@ InterpCall_call(InterpCallObj *self, PyObject *args, PyObject *kwargs)
 
     // Switch back to caller.
     switch_threadstate_back(tsinfo);
+
+    Py_DECREF(pytup);
+    Py_XDECREF(pydict);
 
     if (!pyret) {
         // If error, restore the exception in the calling interp.
@@ -157,10 +211,12 @@ InterpCall_call(InterpCallObj *self, PyObject *args, PyObject *kwargs)
         pyret = pytmp;
     }
     else {
-        pytmp = PyObject_CallFunction((PyObject *)InterpObjProxyTypePtr,
-                                      "OO", pyret, self->tscap);
-        Py_DECREF(pyret);
-        pyret = pytmp;
+        if (!interp_is_primitive(pyret)) {
+            pytmp = PyObject_CallFunction((PyObject *)InterpObjProxyTypePtr,
+                                          "OO", pyret, self->tscap);
+            Py_DECREF(pyret);
+            pyret = pytmp;
+        }
     }
 
     return pyret;

@@ -77,6 +77,7 @@ PyObject        *interp_get_namedtuple_constr   (void);
 PyObject        *interp_get_lists_info          (void);
 PyObject        *interp_get_plugin_name         (void);
 int             interp_set_up_stdout_stderr     (void);
+int             interp_is_primitive             (PyObject *);
 
 static void     interp_init_data                (PyThreadState *);
 static void     interp_destroy_data             (void);
@@ -642,4 +643,17 @@ py_hook_free_fn(PyObject *pyhook)
     Py_DECREF(hook_data->userdata);
     
     PyMem_RawFree(hook_data);
+}
+
+int
+interp_is_primitive(PyObject *obj)
+{
+    if (PyUnicode_CheckExact(obj) || PyLong_CheckExact(obj)     ||
+        PyBool_Check(obj)         || PyFloat_CheckExact(obj)    ||
+        PyComplex_CheckExact(obj) || PyBytes_CheckExact(obj)    ||
+        PyByteArray_CheckExact(obj)) {
+        return 1;
+
+    }
+    return 0;
 }

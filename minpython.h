@@ -212,5 +212,6 @@ extern PyObject        *interp_get_queue_constr     (void); // BR.
 extern PyObject        *interp_get_namedtuple_constr(void); // BR.
 extern PyObject        *interp_get_lists_info       (void); // BR.
 extern PyObject        *interp_get_plugin_name      (void); // NR.
+extern int             interp_is_primitive          (PyObject *);
 
 #endif // __MINPYTHON_H__ 

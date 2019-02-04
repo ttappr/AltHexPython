@@ -190,6 +190,10 @@ InterpObjProxy_getattro(InterpObjProxyObj *self, PyObject *pyname)
     PyObject     *pyhashobj;
 	SwitchTSInfo tsinfo;
 
+	// TODO - Need to figure out what to do with types returned by the
+	//        wrapped object, can they safely be returned without wrapping?
+	//        Or can a subinterp subclass the proxy whose object is a type?
+
     // See if the requested attribute is defined elsewhere first.
     if ((pyretval = PyObject_GenericGetAttr((PyObject *)self, pyname))) {
         return pyretval;
@@ -243,8 +247,11 @@ InterpObjProxy_getattro(InterpObjProxyObj *self, PyObject *pyname)
 
     // TODO - Need to determine which objects to wrap in a proxy before
     //        returning. Don't want to wrap basic types like int, str, etc.
-
-    if (PyDict_Contains(self->cache, pyhashobj)) {
+    if (interp_is_primitive(pyattr)) {
+        pyretval = pyattr;
+        Py_INCREF(pyretval);
+    }
+    else if (PyDict_Contains(self->cache, pyhashobj)) {
         pyretval = PyDict_GetItem(self->cache, pyhashobj); // BR.
         Py_INCREF(pyretval);
     }
