@@ -23,7 +23,8 @@
  ******************************************************************************/
 
 /**
- * echo 0 > /proc/sys/kernel/yama/ptrace_scope
+ * InterpCall objects execute callables in a specific (sub)interprer's
+ * environment.
  */
 
 #include "minpython.h"
@@ -55,7 +56,7 @@ static PyTypeObject InterpCallType = {
     .tp_basicsize   = sizeof(InterpCallObj),
     .tp_itemsize    = 0,
     .tp_flags       = Py_TPFLAGS_DEFAULT,
-	.tp_new         = PyType_GenericNew,
+    .tp_new         = PyType_GenericNew,
     .tp_init        = (initproc)InterpCall_init,
     .tp_dealloc     = (destructor)InterpCall_dealloc,
     .tp_call        = (ternaryfunc)InterpCall_call,
