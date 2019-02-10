@@ -32,6 +32,13 @@
  * created to wrap any arbitrary object if desired.
  */
 
+/**
+ * TODO - Add accessors for wrapped object. For example win.title = 'foo'
+ *        should work transparently. Use tp_setattro to do this.
+ *      - Can use PyObject_IsInstance() to see if self->obj is a type, then
+ *        maybe handle handle differently in .tp_call().
+ */
+
 #include "minpython.h"
 
 /**
@@ -49,11 +56,15 @@ static int      InterpObjProxy_init      (InterpObjProxyObj *, PyObject *,
                                                                PyObject *);
 static void     InterpObjProxy_dealloc   (InterpObjProxyObj *);
 static PyObject *InterpObjProxy_getattro (InterpObjProxyObj *, PyObject *);
+static int      InterpObjProxy_setattro  (InterpObjProxyObj *, PyObject *,
+                                                               PyObject *);
 static PyObject *InterpObjProxy_dir      (InterpObjProxyObj *);
 static PyObject *InterpObjProxy_wrapped  (InterpObjProxyObj *, void *);
 static Py_hash_t InterpObjProxy_hash     (InterpObjProxyObj *);
 static PyObject *InterpObjProxy_cmp      (InterpObjProxyObj *, PyObject *, int);
 static PyObject *InterpObjProxy_repr     (InterpObjProxyObj *, PyObject *);
+static PyObject *InterpObjProxy_call     (InterpObjProxyObj *, PyObject *,
+                                                               PyObject *);
 
 
 /**
@@ -105,6 +116,8 @@ static PyTypeObject InterpObjProxyType = {
     .tp_repr        = (reprfunc)InterpObjProxy_repr,
     .tp_hash        = (hashfunc)InterpObjProxy_hash,
     .tp_getattro    = (getattrofunc)InterpObjProxy_getattro,
+    .tp_setattro    = (setattrofunc)InterpObjProxy_setattro,
+    .tp_call        = (ternaryfunc)InterpObjProxy_call,
 };
 
 /**
@@ -255,11 +268,13 @@ InterpObjProxy_getattro(InterpObjProxyObj *self, PyObject *pyname)
         pyretval = PyDict_GetItem(self->cache, pyhashobj); // BR.
         Py_INCREF(pyretval);
     }
+    /*
     else if (PyCallable_Check(pyattr)) {
         pyretval = PyObject_CallFunction((PyObject *)InterpCallTypePtr,
                                          "OO", pyattr, self->tscap);
         PyDict_SetItem(self->cache, pyhashobj, pyretval);
     }
+    */
     else {
         pyretval = PyObject_CallFunction((PyObject *)InterpObjProxyTypePtr,
                                          "OO", pyattr, self->tscap);
@@ -271,6 +286,41 @@ InterpObjProxy_getattro(InterpObjProxyObj *self, PyObject *pyname)
     return pyretval;
 }
 
+int
+InterpObjProxy_setattro(InterpObjProxyObj *self, PyObject *name,
+                                                 PyObject *value)
+{
+    PyObject     *pyexc_type    = NULL;
+    PyObject     *pyexc         = NULL;
+    PyObject     *pytraceback   = NULL;
+    int          ret;
+    SwitchTSInfo tsinfo;
+
+    ret = PyObject_GenericSetAttr((PyObject *)self, name, value);
+
+    if (ret == -1) {
+        PyErr_Clear();
+
+        // TODO - Wrap nonprimitives in proxy.
+
+        tsinfo = switch_threadstate(self->threadstate);
+
+        ret = PyObject_SetAttr(self->obj, name, value);
+
+        if (ret == -1) {
+            PyErr_Fetch(&pyexc_type, &pyexc, &pytraceback);
+            PyErr_NormalizeException(&pyexc_type, &pyexc, &pytraceback);
+        }
+
+        switch_threadstate_back(tsinfo);
+
+        if (ret == -1) {
+            PyErr_Restore(pyexc_type, pyexc, pytraceback);
+        }
+
+    }
+    return ret;
+}
 
 /**
  * 'obj' getter for the wrapped object.
@@ -360,6 +410,103 @@ InterpObjProxy_hash(InterpObjProxyObj *self)
     hash2 = PyObject_Hash((PyObject *)Py_TYPE(self));
 
     return hash1 + hash2;
+}
+
+PyObject *
+InterpObjProxy_call(InterpObjProxyObj *self, PyObject *args, PyObject *kwargs)
+{
+    PyObject     *pyret;
+    PyObject     *pytmp;
+    PyObject     *pyexc_type    = NULL;
+    PyObject     *pyexc         = NULL;
+    PyObject     *pytraceback   = NULL;
+    PyObject     *pytup;
+    PyObject     *pydict        = NULL;
+    PyObject     *pykey;
+    PyObject     *pyobj;
+    Py_ssize_t   i, j, len;
+    SwitchTSInfo tsinfo;
+
+    // Wrap callables and non basic types in a proxy that executes in the
+    // caller's context.
+    len    = PyObject_Length(args);
+    pytup  = PyTuple_New(len);
+
+    for (i = 0; i < len; i++) {
+        pyobj = PyTuple_GetItem(args, i); // BR.
+        if (PyObject_IsInstance(pyobj, (PyObject *)InterpObjProxyTypePtr) ||
+            interp_is_primitive(pyobj)) {
+            Py_INCREF(pyobj);
+        }
+        else {
+            pyobj = PyObject_CallFunction((PyObject *)InterpObjProxyTypePtr,
+                                          "O", pyobj);
+        }
+        PyTuple_SetItem(pytup, i, pyobj);
+    }
+    if (kwargs) {
+        len    = PyDict_Size(kwargs);
+        pydict = PyDict_New();
+        for (i = 0; i < len; i++) {
+            PyDict_Next(kwargs, &j, &pykey, &pyobj);
+
+            if (PyObject_IsInstance(pyobj, (PyObject *)InterpObjProxyTypePtr) ||
+                interp_is_primitive(pyobj)) {
+                Py_INCREF(pyobj);
+            }
+            else {
+                pyobj = PyObject_CallFunction((PyObject *)InterpObjProxyTypePtr,
+                                              "O", pyobj);
+            }
+            PyDict_SetItem(pydict, pykey, pyobj);
+            Py_DECREF(pyobj);
+        }
+    }
+
+    // Switch to target interpreter.
+    tsinfo = switch_threadstate(self->threadstate);
+
+    // Invoke call.
+    pyret = PyObject_Call(self->obj, pytup, pydict);
+
+    if (!pyret) {
+        // If error, capture exception data, clearing it in the target interp.
+        PyErr_Fetch(&pyexc_type, &pyexc, &pytraceback);
+        PyErr_NormalizeException(&pyexc_type, &pyexc, &pytraceback);
+        // PyErr_SetTraceback(pyexc, pytraceback);
+    }
+
+    // Switch back to caller.
+    switch_threadstate_back(tsinfo);
+
+    Py_DECREF(pytup);
+    Py_XDECREF(pydict);
+
+    if (!pyret) {
+        // If error, restore the exception in the calling interp.
+        PyErr_Restore(pyexc_type, pyexc, pytraceback);
+    }
+    else if (pyret == Py_None) {
+        // Do Nothing.
+    }
+    /*
+    else if (PyCallable_Check(pyret)) {
+        pytmp = PyObject_CallFunction((PyObject *)InterpCallTypePtr,
+                                      "OO", pyret, self->tscap);
+        Py_DECREF(pyret);
+        pyret = pytmp;
+    }
+    */
+    else {
+        if (!interp_is_primitive(pyret)) {
+            pytmp = PyObject_CallFunction((PyObject *)InterpObjProxyTypePtr,
+                                          "OO", pyret, self->tscap);
+            Py_DECREF(pyret);
+            pyret = pytmp;
+        }
+    }
+
+    return pyret;
 }
 
 
