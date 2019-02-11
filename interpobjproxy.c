@@ -194,18 +194,18 @@ InterpObjProxy_dealloc(InterpObjProxyObj *self)
 PyObject *
 InterpObjProxy_getattro(InterpObjProxyObj *self, PyObject *pyname)
 {
-    PyObject	 *pyretval;
-    PyObject	 *pyattr;
+    PyObject     *pyretval;
+    PyObject     *pyattr;
     PyObject     *pyexc_type    = NULL;
     PyObject     *pyexc         = NULL;
     PyObject     *pytraceback   = NULL;
     Py_hash_t    hash;
     PyObject     *pyhashobj;
-	SwitchTSInfo tsinfo;
+    SwitchTSInfo tsinfo;
 
-	// TODO - Need to figure out what to do with types returned by the
-	//        wrapped object, can they safely be returned without wrapping?
-	//        Or can a subinterp subclass the proxy whose object is a type?
+    // TODO - Need to figure out what to do with types returned by the
+    //        wrapped object, can they safely be returned without wrapping?
+    //        Or can a subinterp subclass the proxy whose object is a type?
 
     // See if the requested attribute is defined elsewhere first.
     if ((pyretval = PyObject_GenericGetAttr((PyObject *)self, pyname))) {
@@ -221,12 +221,12 @@ InterpObjProxy_getattro(InterpObjProxyObj *self, PyObject *pyname)
     }
     PyErr_Clear();
 
-	tsinfo = switch_threadstate(self->threadstate);
+    tsinfo = switch_threadstate(self->threadstate);
 
     // Get the attribute from the wrapped object.
     pyattr   = PyObject_GetAttr(self->obj, pyname); // NR.
-	
-	if (PyErr_Occurred()) {
+    
+    if (PyErr_Occurred()) {
         // If error, capture exception data, clearing it in the target interp.
         PyErr_Fetch(&pyexc_type, &pyexc, &pytraceback);
         PyErr_NormalizeException(&pyexc_type, &pyexc, &pytraceback);
@@ -235,15 +235,15 @@ InterpObjProxy_getattro(InterpObjProxyObj *self, PyObject *pyname)
             pyattr = NULL;
         }
     }
-	else {
-	    hash = PyObject_Hash(pyattr);
-	    if (PyErr_Occurred()) {
-	        PyErr_Clear();
-	    }
-	}
+    else {
+        hash = PyObject_Hash(pyattr);
+        if (PyErr_Occurred()) {
+            PyErr_Clear();
+        }
+    }
 
     switch_threadstate_back(tsinfo);
-	
+    
     if(!pyattr) {
         // If error, restore the exception in the calling interp.
         PyErr_Restore(pyexc_type, pyexc, pytraceback);

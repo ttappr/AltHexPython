@@ -123,9 +123,9 @@ InterpCall_call(InterpCallObj *self, PyObject *args, PyObject *kwargs)
 {
     PyObject     *pyret;
     PyObject     *pytmp;
-    PyObject     *pyexc_type	= NULL;
-    PyObject     *pyexc			= NULL;
-    PyObject     *pytraceback	= NULL;
+    PyObject     *pyexc_type    = NULL;
+    PyObject     *pyexc         = NULL;
+    PyObject     *pytraceback   = NULL;
     PyObject     *pytup;
     PyObject     *pydict        = NULL;
     PyObject     *pykey;
