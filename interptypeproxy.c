@@ -64,9 +64,7 @@ static PyType_Spec InterpTypeProxy_spec = {
 void
 interp_type_proxy_init()
 {
-    if (!type_dict) {
-        type_dict = PyDict_New();
-    }
+
 }
 
 PyObject *
@@ -78,7 +76,7 @@ create_type_proxy(PyObject *wrapped_type)
     //pytype = PyType_FromSpec(&InterpTypeProxy_spec);
 
     pybases = PyTuple_New(1);
-    PyTupe_SetItem(pybases, 0, wrapped_type);
+    PyTuple_SetItem(pybases, 0, wrapped_type);
 
     // Subclassing a type from another interp may not be a good idea. Better
     // to use a decorator pattern and hold a class ref to the foreign type.
@@ -97,7 +95,7 @@ create_type_proxy(PyObject *wrapped_type)
 PyObject *
 InterpTypeProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-
+    Py_RETURN_NONE;
 }
 
 int
@@ -115,5 +113,5 @@ InterpTypeProxy_dealloc(InterpTypeProxyObj *self)
 PyObject *
 InterpTypeProxy_getattro(InterpTypeProxyObj *self, PyObject *name)
 {
-
+    Py_RETURN_NONE;
 }
